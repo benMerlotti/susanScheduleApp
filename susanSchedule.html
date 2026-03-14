@@ -145,6 +145,8 @@
   #app-content.visible { display: block; }
   .sign-out { font-size: 11px; color: #888; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 4px 8px; font-family: inherit; }
   .sign-out:hover { color: #666; }
+  .upload-cloud { font-size: 11px; color: #1A6B2A; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 4px 8px; font-family: inherit; }
+  .upload-cloud:hover { color: #148F77; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -171,6 +173,7 @@
     <div><h1>My Week</h1><div class="subtitle">9-11am workout &nbsp;|&nbsp; 11am-2pm work window</div></div>
     <div style="display:flex;align-items:center;gap:14px;">
       <button onclick="goToToday()" id="today-btn" style="background:#C0392B;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-family:inherit;font-weight:700;letter-spacing:0.03em;white-space:nowrap;">&#9733; Today</button>
+      <button type="button" class="upload-cloud" id="upload-to-cloud-btn" title="Copy this device&#39;s data (and archive) to the cloud">Upload to cloud</button>
       <button type="button" class="sign-out" id="sign-out-btn" title="Sign out">Sign out</button>
       <div class="pct-block">
         <div class="pct-week" id="pct-week"></div>
@@ -339,6 +342,15 @@ document.getElementById("auth-google").onclick = function(){
   });
 };
 document.getElementById("sign-out-btn").onclick = function(){ if (firebaseAuth) firebaseAuth.signOut(); };
+
+function uploadLocalToCloud(){
+  if (!firebaseUser) return;
+  loadState();
+  saveToFirebase();
+  var btn = document.getElementById("upload-to-cloud-btn");
+  if (btn) { btn.textContent = "Uploaded \u2713"; setTimeout(function(){ btn.textContent = "Upload to cloud"; }, 2000); }
+}
+document.getElementById("upload-to-cloud-btn").onclick = uploadLocalToCloud;
 
 const STORAGE_KEY = "myweek_v1";
 const TAGS = ["Call","Email","Text","Finance","Travel","Errand","Do"];
