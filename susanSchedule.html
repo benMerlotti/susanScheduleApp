@@ -333,8 +333,14 @@ function loadStateFromFirebase(){
       if (d.categories != null && Array.isArray(d.categories) && d.categories.length) S.categories = d.categories;
       ensureCategories();
     } else {
-      // First time signing in: copy current localStorage data into Firestore
-      loadState();
+      // First time signing in (new account / new device): start with a clean slate
+      var today = new Date(), mon = getMonday(today), wk = weekKey(mon);
+      S.currentWeekKey = wk;
+      S.weekDays = buildWeekDays(mon);
+      S.tasks = [];
+      S.checked = {};
+      S.archive = [];
+      ensureCategories();
       saveToFirebase();
     }
   }).catch(function(err){ console.warn("Firebase load failed:", err); });
@@ -367,8 +373,19 @@ function runAppInit(){
   showRolloverIfNeeded(needsRollover);
 }
 
+function isMobileForAuth(){ return window.innerWidth <= 640 || ("ontouchstart" in window); }
+
 function startAuthListeners(){
   if (!firebaseAuth) return;
+  // Complete Google sign-in when returning from redirect (e.g. on mobile)
+  firebaseAuth.getRedirectResult().then(function(result){
+    if (result.user) setAuthError("");
+  }).catch(function(err){
+    var msg = err && (err.message || err.code || "");
+    if (msg.indexOf("missing initial state") !== -1 || msg.indexOf("initial state") !== -1)
+      setAuthError("Google sign-in had a problem on this device. Try creating an account with Email and Password below.");
+    else if (msg) setAuthError(msg);
+  });
   firebaseAuth.onAuthStateChanged(function(user){
     firebaseUser = user;
     if (user) {
@@ -399,9 +416,15 @@ document.getElementById("auth-google").onclick = function(){
   setAuthError("");
   if (!firebaseAuth) return;
   var provider = new firebase.auth.GoogleAuthProvider();
+  if (isMobileForAuth()) {
+    firebaseAuth.signInWithRedirect(provider);
+    return;
+  }
   firebaseAuth.signInWithPopup(provider).then(function(){ setAuthError(""); }).catch(function(err){
     if (err.code === "auth/popup-blocked") setAuthError("Popup was blocked. Allow popups and try again.");
     else if (err.code === "auth/popup-closed-by-user") setAuthError("");
+    else if (err.message && (err.message.indexOf("missing initial state") !== -1 || err.message.indexOf("initial state") !== -1))
+      setAuthError("Google sign-in had a problem. Try creating an account with Email and Password below.");
     else setAuthError(err.message || "Google sign-in failed.");
   });
 };
