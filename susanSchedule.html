@@ -255,12 +255,23 @@ function hideAuthScreen(){
 }
 function setAuthError(msg){ document.getElementById("auth-error").textContent = msg || ""; }
 
+function firestoreTimestampToDate(val){
+  if (!val) return val;
+  if (typeof val.toDate === "function") return val.toDate();
+  if (val.seconds != null) return new Date(val.seconds * 1000);
+  return val instanceof Date ? val : new Date(val);
+}
+
 function loadStateFromFirebase(){
   return firebaseDb.collection("users").doc(firebaseUser.uid).get().then(function(snap){
     if (snap.exists && snap.data().scheduleData) {
       const d = snap.data().scheduleData;
       if (d.currentWeekKey != null) S.currentWeekKey = d.currentWeekKey;
-      if (d.weekDays != null) S.weekDays = d.weekDays;
+      if (d.weekDays != null) {
+        S.weekDays = d.weekDays.map(function(w){
+          return Object.assign({}, w, { dateObj: firestoreTimestampToDate(w.dateObj) });
+        });
+      }
       if (d.tasks != null) S.tasks = d.tasks;
       if (d.checked != null) S.checked = d.checked;
       if (d.archive != null) S.archive = d.archive;
