@@ -147,6 +147,9 @@
   .sign-out:hover { color: #666; }
   .upload-cloud { font-size: 11px; color: #1A6B2A; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 4px 8px; font-family: inherit; }
   .upload-cloud:hover { color: #148F77; }
+  #cloud-status { font-size: 11px; font-family: monospace; color: #888; padding: 4px 8px; min-width: 80px; }
+  #cloud-status.saved { color: #1A6B2A; }
+  #cloud-status.error { color: #c00; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -175,6 +178,7 @@
       <button onclick="goToToday()" id="today-btn" style="background:#C0392B;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-family:inherit;font-weight:700;letter-spacing:0.03em;white-space:nowrap;">&#9733; Today</button>
       <button type="button" class="upload-cloud" id="upload-to-cloud-btn" title="Copy this device&#39;s data (and archive) to the cloud">Upload to cloud</button>
       <button type="button" class="sign-out" id="sign-out-btn" title="Sign out">Sign out</button>
+      <span id="cloud-status" title="Firestore save status"></span>
       <div class="pct-block">
         <div class="pct-week" id="pct-week"></div>
         <div class="pct"><span id="pct-num">0</span>%</div>
@@ -286,12 +290,22 @@ function loadStateFromFirebase(){
   }).catch(function(err){ console.warn("Firebase load failed:", err); });
 }
 
+function setCloudStatus(msg, isError){
+  var el = document.getElementById("cloud-status");
+  if (!el) return;
+  el.textContent = msg || "";
+  el.className = isError ? "error" : (msg ? "saved" : "");
+  if (msg) setTimeout(function(){ el.textContent = ""; el.className = ""; }, 4000);
+}
+
 function saveToFirebase(){
   if (!firebaseUser || !firebaseDb) return;
   firebaseDb.collection("users").doc(firebaseUser.uid).set({
     scheduleData: S,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true }).catch(function(err){ console.warn("Firebase save failed:", err); });
+  }, { merge: true })
+    .then(function(){ setCloudStatus("Saved"); })
+    .catch(function(err){ setCloudStatus("Save failed: " + (err.message || err.code || "unknown"), true); console.warn("Firebase save failed:", err); });
 }
 
 function runAppInit(){
