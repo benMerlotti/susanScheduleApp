@@ -56,6 +56,11 @@
   .task-row:last-child { border-bottom: none; }
   .task-row.done-row { background: #FAFAF8; }
   .task-row:hover:not(.done-row) { background: #faf9f7; }
+  .task-row.dragging { opacity: 0.5; }
+  .task-row.drag-over { border-top: 2px solid #C0392B; margin-top: -1px; }
+  .task-drag-handle { cursor: grab; color: #bbb; padding: 2px; flex-shrink: 0; user-select: none; }
+  .task-drag-handle:active { cursor: grabbing; }
+  .task-drag-handle:hover { color: #666; }
   .cb { width: 21px; height: 21px; border-radius: 5px; flex-shrink: 0; border: 2px solid #D5D0C8; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.18s; }
   .cb.on { border-color: var(--bc); background: var(--bc); }
   .cb .ck { color: #fff; font-size: 12px; display: none; }
@@ -478,19 +483,23 @@ function renderTabs(){
 function renderDay(){
   const day=getAllTabDays().find(d=>d.key===activeDay);if(!day)return;
   const isT=isToday(day),isP=isPast(day);
-  const dayTasks=S.tasks.filter(t=>t.dayKey===activeDay);
+  // Past days: only show completed tasks (incomplete ones are rolled forward)
+  const dayTasks=isP
+    ? S.tasks.filter(t=>t.dayKey===activeDay&&S.checked[t.id])
+    : S.tasks.filter(t=>t.dayKey===activeDay);
   const nextDef=S.weekDays[S.weekDays.findIndex(d=>d.key===activeDay)+1]||null;
   const groups={};TAG_ORDER.forEach(t=>groups[t]=[]);
   dayTasks.forEach(t=>{if(!groups[t.tag])groups[t.tag]=[];groups[t.tag].push(t);});
   let html=`<div class="day-header">
     <div class="day-title">${day.label} <span style="color:#aaa;font-size:16px;font-weight:400">- ${day.date}</span>
       ${isT?'<span class="today-badge">Today</span>':isP?'<span class="past-badge">past</span>':""}
-    </div><div class="day-note">${day.note}</div></div>
-  <div class="add-bar">
+    </div><div class="day-note">${day.note}</div></div>`;
+  if(!isP)html+=`<div class="add-bar">
     <input id="new-text" placeholder="Add a task for ${day.label}..." onkeydown="if(event.key==='Enter')addTask()" />
     <select id="new-tag">${TAGS.map(t=>`<option>${t}</option>`).join("")}</select>
     <button class="add-btn" onclick="addTask()">+ Add</button>
-  </div><div class="blocks">`;
+  </div>`;
+  html+=`<div class="blocks">`;
   if(day.hasWorkout)html+=`<div class="workout-block"><span style="font-size:20px">&#127939;</span>
     <div><div class="wo-text">Workout &amp; walk - protected time</div><div class="wo-time">9:00 - 11:00am</div></div></div>`;
   let hasAny=false;
@@ -502,7 +511,7 @@ function renderDay(){
         <div class="tag-block-title">${meta.icon} ${tag}</div>
         <div class="tag-block-count">${dc}/${grp.length}</div></div>`;
     grp.forEach((task,ti)=>{
-      const done=!!S.checked[task.id],isE=editingId===task.id,border=ti<grp.length-1?"1px solid #F5F2EE":"none";
+      const done=!!S.checked[task.id],isE=!isP&&editingId===task.id,border=ti<grp.length-1?"1px solid #F5F2EE":"none";
       if(isE){
         html+=`<div class="task-row" style="border-bottom:${border}">
           <input class="edit-input" id="ei_${task.id}" value="${task.text.replace(/"/g,"&quot;")}"
@@ -512,20 +521,24 @@ function renderDay(){
             <button class="ib save-btn" onclick="saveEdit('${task.id}')">Save</button>
             <button class="ib" onclick="cancelEdit()">Cancel</button></div></div>`;
       }else{
-        html+=`<div class="task-row ${done?"done-row":""}" style="border-bottom:${border}">
-          <div class="cb ${done?"on":""}" style="--bc:${meta.color}" onclick="toggleTask('${task.id}')"><span class="ck">&#10003;</span></div>
+        const readOnly=isP;
+        const dragAttrs=readOnly?"":`draggable="true" ondragstart="taskDragStart(event,'${task.id}')" ondragend="taskDragEnd(event)" ondragover="taskDragOver(event,'${task.id}')" ondragleave="taskDragLeave(event)" ondrop="taskDrop(event,'${task.id}')"`;
+        const handle=readOnly?"":`<span class="task-drag-handle" title="Drag to reorder" onclick="event.stopPropagation()">&#9776;</span>`;
+        html+=`<div class="task-row ${done?"done-row":""}" style="border-bottom:${border}" data-task-id="${task.id}" ${dragAttrs}>
+          ${handle}
+          <div class="cb ${done?"on":""}" style="--bc:${meta.color}" ${readOnly?"":`onclick="toggleTask('${task.id}')"`}><span class="ck">&#10003;</span></div>
           <span class="task-text ${done?"done-text":""}">${task.text}</span>
-          <div class="row-actions">
+          ${readOnly?"":`<div class="row-actions">
             <button class="ib" onclick="startEdit('${task.id}')">&#9999;&#65039;</button>
             ${nextDef?`<button class="ib" onclick="pushToNext('${task.id}','${nextDef.key}')">-&gt;${nextDef.label.slice(0,3)}</button>`:""}
             <button class="ib" onclick="openModal('${task.id}')">&#128197;</button>
             <button class="ib del" onclick="deleteTask('${task.id}')">&#x2715;</button>
-          </div></div>`;
+          </div>`}</div>`;
       }
     });
     html+=`</div>`;
   });
-  if(!hasAny)html+=`<div class="empty-day">No tasks for ${day.label} - add one above!</div>`;
+  if(!hasAny)html+=`<div class="empty-day">${isP?"No completed tasks for this day.":"No tasks for "+day.label+" - add one above!"}</div>`;
   html+=`</div>`;
   document.getElementById("content").innerHTML=html;
   if(editingId){const inp=document.getElementById("ei_"+editingId);if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}}
@@ -566,6 +579,43 @@ function openModal(id){
 function moveToDay(toKey){const t=S.tasks.find(t=>t.id===moveCtx);if(t)t.dayKey=toKey;closeModal();saveState();render();}
 function closeModal(){moveCtx=null;document.getElementById("modal-overlay").classList.remove("open");}
 function deleteTask(id){if(!confirm("Delete this task?"))return;S.tasks=S.tasks.filter(t=>t.id!==id);delete S.checked[id];saveState();render();}
+
+function getDayTasksInOrder(){
+  return S.tasks.filter(t=>t.dayKey===activeDay);
+}
+function reorderDayTasks(draggedId,targetId){
+  const dayTasks=getDayTasksInOrder();
+  if(dayTasks.length<2)return;
+  const idx=dayTasks.findIndex(t=>t.id===draggedId);
+  const targetIdx=dayTasks.findIndex(t=>t.id===targetId);
+  if(idx===-1||targetIdx===-1||idx===targetIdx)return;
+  const reordered=dayTasks.filter(t=>t.id!==draggedId);
+  const insertAt=reordered.findIndex(t=>t.id===targetId);
+  reordered.splice(insertAt,0,dayTasks[idx]);
+  const other=S.tasks.filter(t=>t.dayKey!==activeDay);
+  S.tasks=[...other,...reordered];
+  saveState();render();
+}
+function taskDragStart(ev,id){
+  ev.dataTransfer.setData("text/plain",id);
+  ev.dataTransfer.effectAllowed="move";
+  ev.target.closest(".task-row").classList.add("dragging");
+}
+function taskDragEnd(ev){ev.target.closest(".task-row")?.classList.remove("dragging");document.querySelectorAll(".task-row.drag-over").forEach(r=>r.classList.remove("drag-over"));}
+function taskDragOver(ev,id){
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect="move";
+  const row=ev.target.closest(".task-row");
+  if(row&&!row.classList.contains("dragging"))row.classList.add("drag-over");
+}
+function taskDragLeave(ev){const row=ev.target.closest(".task-row");if(row)row.classList.remove("drag-over");}
+function taskDrop(ev,targetId){
+  ev.preventDefault();
+  ev.target.closest(".task-row")?.classList.remove("drag-over");
+  const draggedId=ev.dataTransfer.getData("text/plain");
+  if(draggedId&&draggedId!==targetId)reorderDayTasks(draggedId,targetId);
+}
+
 document.getElementById("modal-overlay").addEventListener("click",e=>{if(e.target.id==="modal-overlay")closeModal();});
 
 function goToToday(){
