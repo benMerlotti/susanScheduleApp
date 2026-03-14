@@ -12,6 +12,7 @@
   #header h1 { color: #F5F2ED; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
   #header .subtitle { color: #888; font-size: 12px; margin-top: 3px; font-family: monospace; }
   .pct-block { text-align: right; }
+  .pct-week { color: #888; font-size: 11px; font-family: monospace; margin-bottom: 2px; }
   .pct { color: #F5F2ED; font-size: 22px; font-weight: 700; }
   .pct-sub { color: #888; font-size: 11px; font-family: monospace; }
   #progress-bar-wrap { margin-top: 12px; height: 4px; background: #333; border-radius: 4px; overflow: hidden; }
@@ -37,6 +38,9 @@
   .today-badge { font-size: 12px; color: #C0392B; font-weight: 700; margin-left: 8px; }
   .past-badge { font-size: 12px; color: #ccc; margin-left: 8px; }
   .day-note { font-size: 13px; color: #888; font-style: italic; margin-top: 3px; }
+  .day-pct { font-size: 12px; color: #666; margin-top: 6px; font-family: monospace; }
+  .day-pct-bar-wrap { margin-top: 6px; height: 4px; background: #e8e6e2; border-radius: 4px; overflow: hidden; max-width: 120px; }
+  .day-pct-bar { height: 100%; background: #C0392B; border-radius: 4px; transition: width 0.3s ease; }
   .add-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
   .add-bar input { flex: 1; min-width: 150px; border: 1.5px solid #ddd; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-family: inherit; background: #fff; outline: none; }
   .add-bar input:focus { border-color: #999; }
@@ -90,6 +94,12 @@
   .ro-head h2 { color: #fff; font-size: 17px; font-weight: 700; }
   .ro-head p { color: #888; font-size: 12px; margin-top: 4px; font-family: monospace; }
   .ro-body { padding: 4px 24px; max-height: 55vh; overflow-y: auto; }
+  .ro-bulk { background: #f8f7f5; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid #eee; }
+  .ro-bulk-title { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .ro-bulk-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; flex-wrap: wrap; }
+  .ro-bulk-row:not(:last-child) { border-bottom: 1px solid #eee; }
+  .ro-bulk-label { font-size: 13px; color: #333; }
+  .ro-bulk-sel { border: 1.5px solid #ddd; border-radius: 7px; padding: 5px 8px; font-size: 12px; font-family: inherit; background: #fff; cursor: pointer; outline: none; min-width: 120px; }
   .ro-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F0EDE8; }
   .ro-row:last-child { border-bottom: none; }
   .ro-tag { font-size: 10px; font-weight: 700; color: #fff; border-radius: 4px; padding: 2px 6px; flex-shrink: 0; }
@@ -103,15 +113,63 @@
   .ro-confirm:hover { background: #333; }
   .ro-skip { padding: 10px 16px; background: #eee; color: #666; border: none; border-radius: 9px; cursor: pointer; font-size: 13px; font-family: inherit; }
   .ro-skip:hover { background: #e0e0e0; }
+  #confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 250; align-items: center; justify-content: center; }
+  #confirm-overlay.open { display: flex; }
+  #confirm-modal { background: #fff; border-radius: 16px; width: 340px; max-width: 92vw; box-shadow: 0 12px 50px rgba(0,0,0,0.22); overflow: hidden; }
+  #confirm-modal .confirm-head { background: #1C1C1C; padding: 14px 20px; border-bottom: 3px solid #C0392B; }
+  #confirm-modal .confirm-head h3 { color: #fff; font-size: 15px; font-weight: 700; }
+  #confirm-modal .confirm-body { padding: 20px; font-size: 14px; color: #333; line-height: 1.5; }
+  #confirm-modal .confirm-foot { padding: 14px 20px; background: #fafaf8; border-top: 1px solid #eee; display: flex; gap: 10px; justify-content: flex-end; }
+  .confirm-btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-family: inherit; font-weight: 600; cursor: pointer; border: none; }
+  .confirm-btn-yes { background: #C0392B; color: #fff; }
+  .confirm-btn-yes:hover { background: #a93226; }
+  .confirm-btn-no { background: #eee; color: #666; }
+  .confirm-btn-no:hover { background: #e0e0e0; }
+  #auth-screen { display: none; position: fixed; inset: 0; background: #F5F2ED; z-index: 300; align-items: center; justify-content: center; padding: 20px; }
+  #auth-screen.visible { display: flex; }
+  #auth-card { background: #fff; border-radius: 16px; padding: 32px; width: 340px; max-width: 100%; box-shadow: 0 12px 40px rgba(0,0,0,0.12); border-top: 3px solid #C0392B; }
+  #auth-card h2 { font-size: 20px; font-weight: 700; color: #1C1C1C; margin-bottom: 8px; }
+  #auth-card p { font-size: 13px; color: #666; margin-bottom: 20px; }
+  #auth-card input { width: 100%; border: 1.5px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 14px; margin-bottom: 12px; box-sizing: border-box; }
+  #auth-card input:focus { outline: none; border-color: #999; }
+  #auth-card button { width: 100%; padding: 11px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 4px; }
+  .auth-btn-primary { background: #C0392B; color: #fff; }
+  .auth-btn-primary:hover { background: #a93226; }
+  .auth-btn-secondary { background: #eee; color: #666; margin-top: 8px; }
+  .auth-btn-secondary:hover { background: #e0e0e0; }
+  .auth-error { font-size: 12px; color: #c00; margin-top: 8px; min-height: 18px; }
+  .auth-divider { margin: 16px 0; font-size: 12px; color: #888; text-align: center; }
+  #app-content { display: none; }
+  #app-content.visible { display: block; }
+  .sign-out { font-size: 11px; color: #888; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 4px 8px; font-family: inherit; }
+  .sign-out:hover { color: #666; }
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
+<div id="auth-screen" class="visible">
+  <div id="auth-card">
+    <h2>My Week</h2>
+    <p>Sign in so your schedule is saved and available on any device.</p>
+    <input type="email" id="auth-email" placeholder="Email" autocomplete="email" />
+    <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password" />
+    <div class="auth-error" id="auth-error"></div>
+    <button class="auth-btn-primary" id="auth-signin">Sign in</button>
+    <div class="auth-divider">or</div>
+    <button class="auth-btn-secondary" id="auth-signup">Create account</button>
+  </div>
+</div>
+<div id="app-content">
 <div id="header">
   <div class="header-row">
     <div><h1>My Week</h1><div class="subtitle">9-11am workout &nbsp;|&nbsp; 11am-2pm work window</div></div>
     <div style="display:flex;align-items:center;gap:14px;">
       <button onclick="goToToday()" id="today-btn" style="background:#C0392B;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-family:inherit;font-weight:700;letter-spacing:0.03em;white-space:nowrap;">&#9733; Today</button>
+      <button type="button" class="sign-out" id="sign-out-btn" title="Sign out">Sign out</button>
       <div class="pct-block">
+        <div class="pct-week" id="pct-week"></div>
         <div class="pct"><span id="pct-num">0</span>%</div>
         <div class="pct-sub"><span id="done-num">0</span> / <span id="total-num">0</span> done</div>
       </div>
@@ -141,13 +199,122 @@
     <div class="ro-head"><h2 id="ro-title">Unfinished tasks</h2><p id="ro-sub"></p></div>
     <div class="ro-body" id="ro-body"></div>
     <div class="ro-foot">
-      <button class="ro-all" onclick="rolloverMoveAll()">Move all to today</button>
-      <button class="ro-confirm" onclick="rolloverConfirm()">Move each as selected</button>
-      <button class="ro-skip" onclick="rolloverSkip()">Leave as-is</button>
+      <button class="ro-all" onclick="rolloverConfirmAsk('moveAll')">Move all to today</button>
+      <button class="ro-confirm" onclick="rolloverConfirmAsk('apply')">Move each as selected</button>
+      <button class="ro-skip" onclick="rolloverConfirmAsk('leave')">Leave as-is</button>
     </div>
   </div>
 </div>
+<div id="confirm-overlay">
+  <div id="confirm-modal">
+    <div class="confirm-head"><h3>Are you sure?</h3></div>
+    <div class="confirm-body" id="confirm-message"></div>
+    <div class="confirm-foot">
+      <button class="confirm-btn confirm-btn-no" id="confirm-cancel">Cancel</button>
+      <button class="confirm-btn confirm-btn-yes" id="confirm-yes">Yes</button>
+    </div>
+  </div>
+</div>
+</div>
+<!-- end #app-content -->
 <script>
+// Your Firebase config (from Firebase Console > Project settings)
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyC6n4vN4RFcGU0YOf0iO_VI3UzVbI0j7F4",
+  authDomain: "susan-scheduler-b763b.firebaseapp.com",
+  projectId: "susan-scheduler-b763b",
+  storageBucket: "susan-scheduler-b763b.firebasestorage.app",
+  messagingSenderId: "458232685657",
+  appId: "1:458232685657:web:2e451e51f79b7c21967d48",
+  measurementId: "G-97C90L6PQ1"
+};
+let firebaseApp, firebaseAuth, firebaseDb, firebaseUser = null;
+
+function initFirebase(){
+  try {
+    firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+    firebaseAuth = firebase.auth();
+    firebaseDb = firebase.firestore();
+    if (firebaseDb.enableIndexedDbPersistence) {
+      firebaseDb.enableIndexedDbPersistence({ synchronizeTabs: true }).catch(function(err) { if (err.code !== "failed-precondition") console.warn("Firebase persistence:", err); });
+    }
+  } catch (e) { console.warn("Firebase init failed (use your config):", e); }
+}
+
+function showAuthScreen(){
+  document.getElementById("auth-screen").classList.add("visible");
+  document.getElementById("app-content").classList.remove("visible");
+}
+function hideAuthScreen(){
+  document.getElementById("auth-screen").classList.remove("visible");
+  document.getElementById("app-content").classList.add("visible");
+}
+function setAuthError(msg){ document.getElementById("auth-error").textContent = msg || ""; }
+
+function loadStateFromFirebase(){
+  return firebaseDb.collection("users").doc(firebaseUser.uid).get().then(function(snap){
+    if (snap.exists && snap.data().scheduleData) {
+      const d = snap.data().scheduleData;
+      if (d.currentWeekKey != null) S.currentWeekKey = d.currentWeekKey;
+      if (d.weekDays != null) S.weekDays = d.weekDays;
+      if (d.tasks != null) S.tasks = d.tasks;
+      if (d.checked != null) S.checked = d.checked;
+      if (d.archive != null) S.archive = d.archive;
+    } else {
+      // First time signing in: copy current localStorage data into Firestore
+      loadState();
+      saveToFirebase();
+    }
+  }).catch(function(err){ console.warn("Firebase load failed:", err); });
+}
+
+function saveToFirebase(){
+  if (!firebaseUser || !firebaseDb) return;
+  firebaseDb.collection("users").doc(firebaseUser.uid).set({
+    scheduleData: S,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true }).catch(function(err){ console.warn("Firebase save failed:", err); });
+}
+
+function runAppInit(){
+  if(!firebaseUser) loadState();
+  const needsRollover = initOrAdvanceWeek();
+  activeDay = getTodayKey();
+  tabOffset = getTabOffsetForActiveDay();
+  render();
+  showRolloverIfNeeded(needsRollover);
+}
+
+function startAuthListeners(){
+  if (!firebaseAuth) return;
+  firebaseAuth.onAuthStateChanged(function(user){
+    firebaseUser = user;
+    if (user) {
+      loadStateFromFirebase().then(function(){ runAppInit(); });
+      hideAuthScreen();
+    } else {
+      showAuthScreen();
+    }
+  });
+}
+
+document.getElementById("auth-signin").onclick = function(){
+  setAuthError("");
+  var email = document.getElementById("auth-email").value.trim();
+  var password = document.getElementById("auth-password").value;
+  if (!email || !password) { setAuthError("Enter email and password."); return; }
+  firebaseAuth.signInWithEmailAndPassword(email, password).then(function(){ setAuthError(""); }).catch(function(err){ setAuthError(err.message || "Sign in failed."); });
+};
+document.getElementById("auth-signup").onclick = function(){
+  setAuthError("");
+  var email = document.getElementById("auth-email").value.trim();
+  var password = document.getElementById("auth-password").value;
+  if (!email || !password) { setAuthError("Enter email and password."); return; }
+  if (password.length < 6) { setAuthError("Password should be at least 6 characters."); return; }
+  firebaseAuth.createUserWithEmailAndPassword(email, password).then(function(){ setAuthError(""); }).catch(function(err){ setAuthError(err.message || "Create account failed."); });
+};
+document.getElementById("sign-out-btn").onclick = function(){ if (firebaseAuth) firebaseAuth.signOut(); };
+
 const STORAGE_KEY = "myweek_v1";
 const TAGS = ["Call","Email","Text","Finance","Travel","Errand","Do"];
 const TAG_ORDER = ["Finance","Call","Email","Text","Travel","Errand","Do"];
@@ -184,10 +351,13 @@ function buildWeekDays(mon){
 function todayDow(){return DOW_LABELS[new Date().getDay()];}
 
 let S={currentWeekKey:null,weekDays:[],tasks:[],checked:{},archive:[]};
-let activeDay=null,editingId=null,moveCtx=null;
+let activeDay=null,editingId=null,moveCtx=null,confirmCtx=null;
 
 function loadState(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)S={...S,...JSON.parse(r)};}catch(e){}}
-function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));}catch(e){}}
+function saveState(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));}catch(e){}
+  saveToFirebase();
+}
 
 function initOrAdvanceWeek(){
   const today=new Date(),mon=getMonday(today),wk=weekKey(mon);
@@ -301,10 +471,30 @@ function buildRolloverDays(){
 function showRolloverIfNeeded(isNewWeek){
   const ov=getOverdueTasks();if(!ov.length)return;
   const rolloverDays=buildRolloverDays();
-  const todayDef=rolloverDays[0]; // first entry is always today
+  const todayDef=rolloverDays[0];
   document.getElementById("ro-title").textContent=isNewWeek?"New week! Place your unfinished tasks":"Unfinished tasks from previous days";
   document.getElementById("ro-sub").textContent=ov.length+" task"+(ov.length>1?"s":"")+" need a day - pick where each one goes.";
   const body=document.getElementById("ro-body");body.innerHTML="";
+  const dayOpts=rolloverDays.map(d=>`<option value="${d.key}"${d.key===todayDef?.key?" selected":""}>${d.label} - ${d.date}</option>`).join("");
+  const tagsInOv=[...new Set(ov.map(t=>t.tag))];
+  const bulkTags=TAG_ORDER.filter(t=>tagsInOv.includes(t));
+  if(bulkTags.length>0){
+    const bulk=document.createElement("div");bulk.className="ro-bulk";
+    bulk.innerHTML=`<div class="ro-bulk-title">Bulk suggestions — set day for all tasks in a category</div>`;
+    bulkTags.forEach(tag=>{
+      const meta=TAG_META[tag]||{color:"#888"};
+      const row=document.createElement("div");row.className="ro-bulk-row";
+      row.innerHTML=`<span class="ro-tag" style="background:${meta.color}">${tag}</span>
+        <span class="ro-bulk-label">Move all to</span>
+        <select class="ro-bulk-sel" data-bulk-tag="${tag}">${dayOpts}</select>`;
+      row.querySelector("select").onchange=function(){
+        const dayKey=this.value;
+        ov.filter(t=>t.tag===tag).forEach(t=>{const s=document.getElementById("ro_"+t.id);if(s)s.value=dayKey;});
+      };
+      bulk.appendChild(row);
+    });
+    body.appendChild(bulk);
+  }
   ov.forEach(task=>{
     const meta=TAG_META[task.tag]||{color:"#888"};
     const fromDef=S.weekDays.find(d=>d.key===task.dayKey);
@@ -320,15 +510,33 @@ function showRolloverIfNeeded(isNewWeek){
   document.getElementById("rollover-overlay").classList.add("open");
 }
 
+function showConfirm(message,onConfirm){
+  confirmCtx=onConfirm;
+  document.getElementById("confirm-message").textContent=message;
+  document.getElementById("confirm-overlay").classList.add("open");
+}
+function closeConfirm(){
+  confirmCtx=null;
+  document.getElementById("confirm-overlay").classList.remove("open");
+}
+document.getElementById("confirm-yes").onclick=function(){if(confirmCtx){confirmCtx();closeConfirm();}};
+document.getElementById("confirm-cancel").onclick=closeConfirm;
+document.getElementById("confirm-overlay").addEventListener("click",function(e){if(e.target.id==="confirm-overlay")closeConfirm();});
+
+function rolloverConfirmAsk(choice){
+  if(choice==="moveAll")showConfirm("All tasks will be moved to today. Continue?",function(){closeConfirm();rolloverMoveAll();});
+  else if(choice==="apply")showConfirm("Tasks will be moved to the days you selected. Continue?",function(){closeConfirm();rolloverConfirm(true);});
+  else showConfirm("Leave tasks as-is? You can reschedule them later from each day.",function(){closeConfirm();rolloverSkip(true);});
+}
 function rolloverMoveAll(){
   const rolloverDays=buildRolloverDays();
   const today=new Date();today.setHours(0,0,0,0);
   const todayDef=rolloverDays.find(d=>{const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);return dd.getTime()===today.getTime();})||rolloverDays[0];
   if(!todayDef)return;
   getOverdueTasks().forEach(task=>{const s=document.getElementById("ro_"+task.id);if(s)s.value=todayDef.key;});
-  rolloverConfirm();
+  rolloverConfirm(true);
 }
-function rolloverConfirm(){
+function rolloverConfirm(skipConfirm){
   // Collect all selected day keys — some may be from next week
   const selectedKeys=new Set();
   getOverdueTasks().forEach(task=>{
@@ -342,7 +550,6 @@ function rolloverConfirm(){
   const nextWeekKeys=new Set(nextWeekDays.map(d=>d.key));
   const movedToNextWeek=[...selectedKeys].some(k=>nextWeekKeys.has(k));
   if(movedToNextWeek){
-    // Archive completed tasks from this week
     const done=S.tasks.filter(t=>S.checked[t.id]);
     if(done.length>0){
       const d=new Date(S.currentWeekKey+"T00:00:00");
@@ -354,19 +561,30 @@ function rolloverConfirm(){
     S.weekDays=nextWeekDays;
     S.tasks=S.tasks.filter(t=>!S.checked[t.id]);
     S.checked={};
-    // Today may not be in next week — find the actual today across all rollover days
     const allRolloverDays=buildRolloverDays();
     const todayActual=new Date();todayActual.setHours(0,0,0,0);
     const todayInRollover=allRolloverDays.find(d=>{const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);return dd.getTime()===todayActual.getTime();});
     if(todayInRollover&&!S.weekDays.find(d=>d.key===todayInRollover.key)){
-      // Today is not in next week either — add it as a synthetic entry
       S.weekDays=[todayInRollover,...S.weekDays];
     }
     activeDay=getTodayKey();
   }
-  saveState();rolloverSkip();
+  saveState();
+  rolloverSkip(true);
 }
-function rolloverSkip(){document.getElementById("rollover-overlay").classList.remove("open");render();}
+function rolloverSkip(skipConfirm){
+  if(!skipConfirm)return;
+  document.getElementById("rollover-overlay").classList.remove("open");
+  tabOffset=getTabOffsetForActiveDay();
+  render();
+}
+function getTabOffsetForActiveDay(){
+  const days=getAllTabDays();
+  const idx=days.findIndex(d=>d.key===activeDay);
+  if(idx<0)return 0;
+  const maxOffset=Math.max(0,days.length-TABS_VISIBLE);
+  return Math.min(idx,maxOffset);
+}
 
 function getTodayKey(){
   // Use the same day list as tabs so we always resolve to actual calendar today when it's in the list
@@ -384,7 +602,12 @@ function render(){
 }
 
 function renderProgress(){
-  const total=S.tasks.length,done=S.tasks.filter(t=>S.checked[t.id]).length,pct=total?Math.round(done/total*100):0;
+  const todayWeekMon=getMonday(new Date());
+  const weekLabel="Week of "+todayWeekMon.toLocaleDateString("default",{month:"short",day:"numeric",year:"numeric"});
+  const weekKeys=new Set(buildWeekDays(todayWeekMon).map(d=>d.key));
+  const weekTasks=S.tasks.filter(t=>weekKeys.has(t.dayKey));
+  const total=weekTasks.length,done=weekTasks.filter(t=>S.checked[t.id]).length,pct=total?Math.round(done/total*100):0;
+  document.getElementById("pct-week").textContent=weekLabel;
   document.getElementById("pct-num").textContent=pct;
   document.getElementById("done-num").textContent=done;
   document.getElementById("total-num").textContent=total;
@@ -417,12 +640,13 @@ function getSyntheticDaysBetween(todayMidnight, firstFutureDate){
 }
 function getAllTabDays(){
   // Build the full navigable list:
-  // past days this week → today → future days this week → all of next week
+  // previous week → past days this week → today → future days this week → all of next week
   const today=new Date();today.setHours(0,0,0,0);
+  const lastWeekMon=getMonday(new Date(today.getTime()-7*24*60*60*1000));
+  const lastWeekDays=buildWeekDays(lastWeekMon);
   const past=S.weekDays.filter(d=>{const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);return dd<today;});
   const todayAndFuture=S.weekDays.filter(d=>{const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);return dd>=today;});
   const hasActualToday=[...past,...todayAndFuture].some(d=>{const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);return dd.getTime()===today.getTime();});
-  // If today is not in S.weekDays (e.g. we advanced to next week), add synthetic today + any days until we hit S.weekDays (e.g. this Sunday)
   let synthetic=[];
   if(!hasActualToday){
     const firstFuture=todayAndFuture[0];
@@ -436,7 +660,10 @@ function getAllTabDays(){
   const seen=new Set(S.weekDays.map(d=>d.key));
   synthetic.forEach(s=>seen.add(s.key));
   const nextWeekNew=nextWeek.filter(d=>!seen.has(d.key));
-  return synthetic.length?[...past,...synthetic,...todayAndFuture,...nextWeekNew]:[...past,...todayAndFuture,...nextWeekNew];
+  const thisWeekPart=synthetic.length?[...past,...synthetic,...todayAndFuture,...nextWeekNew]:[...past,...todayAndFuture,...nextWeekNew];
+  const seenThisWeek=new Set(thisWeekPart.map(d=>d.key));
+  const lastWeekNew=lastWeekDays.filter(d=>!seenThisWeek.has(d.key));
+  return [...lastWeekNew,...thisWeekPart];
 }
 
 function getTodayTabOffset(){
@@ -480,20 +707,39 @@ function renderTabs(){
 }
 
 
+function getWeekKeyForDay(dayKey){
+  const dateStr=dayKey.split("_")[1];
+  if(!dateStr)return null;
+  const mon=getMonday(new Date(dateStr+"T00:00:00"));
+  return weekKey(mon);
+}
 function renderDay(){
   const day=getAllTabDays().find(d=>d.key===activeDay);if(!day)return;
   const isT=isToday(day),isP=isPast(day);
-  // Past days: only show completed tasks (incomplete ones are rolled forward)
-  const dayTasks=isP
+  // Past days: show completed tasks from S.tasks for this day, or (if none) archive for that week
+  let dayTasks=isP
     ? S.tasks.filter(t=>t.dayKey===activeDay&&S.checked[t.id])
     : S.tasks.filter(t=>t.dayKey===activeDay);
+  let archiveForWeek=null;
+  if(isP&&dayTasks.length===0){
+    const wk=getWeekKeyForDay(activeDay);
+    if(wk)archiveForWeek=S.archive.find(a=>a.weekKey===wk);
+    if(archiveForWeek&&archiveForWeek.tasks&&archiveForWeek.tasks.length>0){
+      dayTasks=archiveForWeek.tasks.map((t,i)=>({id:"ar_"+i,text:t.text,tag:t.tag,dayKey:activeDay}));
+    }
+  }
   const nextDef=S.weekDays[S.weekDays.findIndex(d=>d.key===activeDay)+1]||null;
   const groups={};TAG_ORDER.forEach(t=>groups[t]=[]);
   dayTasks.forEach(t=>{if(!groups[t.tag])groups[t.tag]=[];groups[t.tag].push(t);});
+  const dayDone=dayTasks.filter(t=>S.checked[t.id]||(t.id&&String(t.id).startsWith("ar_"))).length;
+  const dayTotal=dayTasks.length;
+  const dayPct=dayTotal?Math.round(dayDone/dayTotal*100):0;
   let html=`<div class="day-header">
     <div class="day-title">${day.label} <span style="color:#aaa;font-size:16px;font-weight:400">- ${day.date}</span>
       ${isT?'<span class="today-badge">Today</span>':isP?'<span class="past-badge">past</span>':""}
-    </div><div class="day-note">${day.note}</div></div>`;
+    </div><div class="day-note">${day.note}</div>
+    ${dayTotal?`<div class="day-pct">${dayDone}/${dayTotal} done (${dayPct}%)</div><div class="day-pct-bar-wrap"><div class="day-pct-bar" style="width:${dayPct}%"></div></div>`:""}
+    ${archiveForWeek?'<div class="day-note" style="margin-top:6px;color:#888;">Completed that week (for reference)</div>':""}</div>`;
   if(!isP)html+=`<div class="add-bar">
     <input id="new-text" placeholder="Add a task for ${day.label}..." onkeydown="if(event.key==='Enter')addTask()" />
     <select id="new-tag">${TAGS.map(t=>`<option>${t}</option>`).join("")}</select>
@@ -505,13 +751,13 @@ function renderDay(){
   let hasAny=false;
   TAG_ORDER.forEach(tag=>{
     const grp=groups[tag]||[];if(!grp.length)return;hasAny=true;
-    const meta=TAG_META[tag],dc=grp.filter(t=>S.checked[t.id]).length;
+    const meta=TAG_META[tag],dc=grp.filter(t=>S.checked[t.id]||(t.id&&String(t.id).startsWith("ar_"))).length;
     html+=`<div class="tag-block ${dc===grp.length?"all-done":""}">
       <div class="tag-block-header" style="background:${meta.color}">
         <div class="tag-block-title">${meta.icon} ${tag}</div>
         <div class="tag-block-count">${dc}/${grp.length}</div></div>`;
     grp.forEach((task,ti)=>{
-      const done=!!S.checked[task.id],isE=!isP&&editingId===task.id,border=ti<grp.length-1?"1px solid #F5F2EE":"none";
+      const done=!!S.checked[task.id]||(task.id&&String(task.id).startsWith("ar_")),isE=!isP&&editingId===task.id,border=ti<grp.length-1?"1px solid #F5F2EE":"none";
       if(isE){
         html+=`<div class="task-row" style="border-bottom:${border}">
           <input class="edit-input" id="ei_${task.id}" value="${task.text.replace(/"/g,"&quot;")}"
@@ -625,12 +871,14 @@ function goToToday(){
   render();
 }
 
-loadState();
-const needsRollover=initOrAdvanceWeek();
-activeDay=getTodayKey();
-tabOffset=getTodayTabOffset();
-render();
-showRolloverIfNeeded(needsRollover);
+initFirebase();
+if(firebaseApp&&FIREBASE_CONFIG.apiKey&&!FIREBASE_CONFIG.apiKey.includes("YOUR_")){
+  startAuthListeners();
+}else{
+  document.getElementById("auth-screen").classList.remove("visible");
+  document.getElementById("app-content").classList.add("visible");
+  runAppInit();
+}
 </script>
 </body>
 </html>
