@@ -156,6 +156,7 @@
   .auth-btn-secondary { background: #eee; color: #666; margin-top: 8px; }
   .auth-btn-secondary:hover { background: #e0e0e0; }
   .auth-error { font-size: 12px; color: #c00; margin-top: 8px; min-height: 18px; }
+  .auth-hint { font-size: 11px; color: #999; margin-top: 14px; text-align: center; line-height: 1.4; }
   .auth-divider { margin: 16px 0; font-size: 12px; color: #888; text-align: center; }
   .auth-btn-google { background: #fff; color: #333; border: 1.5px solid #ddd; margin-top: 8px; }
   .auth-btn-google:hover { background: #f8f8f8; border-color: #ccc; }
@@ -209,6 +210,7 @@
     <button class="auth-btn-secondary" id="auth-signup">Create account</button>
     <div class="auth-divider">or</div>
     <button type="button" class="auth-btn-secondary auth-btn-google" id="auth-google">Sign in with Google</button>
+    <p class="auth-hint">On phones, creating an account with Email and Password is most reliable.</p>
   </div>
 </div>
 <div id="app-content">
@@ -373,19 +375,8 @@ function runAppInit(){
   showRolloverIfNeeded(needsRollover);
 }
 
-function isMobileForAuth(){ return window.innerWidth <= 640 || ("ontouchstart" in window); }
-
 function startAuthListeners(){
   if (!firebaseAuth) return;
-  // Complete Google sign-in when returning from redirect (e.g. on mobile)
-  firebaseAuth.getRedirectResult().then(function(result){
-    if (result.user) setAuthError("");
-  }).catch(function(err){
-    var msg = err && (err.message || err.code || "");
-    if (msg.indexOf("missing initial state") !== -1 || msg.indexOf("initial state") !== -1)
-      setAuthError("Google sign-in had a problem on this device. Try creating an account with Email and Password below.");
-    else if (msg) setAuthError(msg);
-  });
   firebaseAuth.onAuthStateChanged(function(user){
     firebaseUser = user;
     if (user) {
@@ -416,16 +407,15 @@ document.getElementById("auth-google").onclick = function(){
   setAuthError("");
   if (!firebaseAuth) return;
   var provider = new firebase.auth.GoogleAuthProvider();
-  if (isMobileForAuth()) {
-    firebaseAuth.signInWithRedirect(provider);
-    return;
-  }
+  // Use popup everywhere: redirect is broken on GitHub Pages (non–Firebase Hosting)
+  // because mobile browsers block third-party storage, so getRedirectResult() never gets the user.
   firebaseAuth.signInWithPopup(provider).then(function(){ setAuthError(""); }).catch(function(err){
-    if (err.code === "auth/popup-blocked") setAuthError("Popup was blocked. Allow popups and try again.");
+    if (err.code === "auth/popup-blocked") setAuthError("Popup was blocked. Use Email and Password below, or allow popups and try again.");
     else if (err.code === "auth/popup-closed-by-user") setAuthError("");
+    else if (err.code === "auth/cancelled-popup-request") setAuthError("");
     else if (err.message && (err.message.indexOf("missing initial state") !== -1 || err.message.indexOf("initial state") !== -1))
-      setAuthError("Google sign-in had a problem. Try creating an account with Email and Password below.");
-    else setAuthError(err.message || "Google sign-in failed.");
+      setAuthError("Google sign-in had a problem on this device. Create an account with Email and Password below.");
+    else setAuthError((err.message || "Google sign-in failed.") + " You can use Email and Password below instead.");
   });
 };
 document.getElementById("sign-out-btn").onclick = function(){ if (firebaseAuth) firebaseAuth.signOut(); };
