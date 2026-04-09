@@ -33,6 +33,7 @@
   ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
   #header { background: var(--header-bg); padding: 24px 32px 20px; position: relative; }
+  #header.header-banner-custom #progress-bar-wrap { position: relative; z-index: 1; }
   .header-row { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; }
   #header h1 { color: #FFFFFF; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
   #header .subtitle { color: #9CA3AF; font-size: 13px; font-weight: 500; }
@@ -89,6 +90,14 @@
   .add-bar select:focus { border-color: var(--accent); }
   .add-bar .add-btn { background: var(--text-main); color: #fff; border: none; border-radius: 8px; padding: 10px 20px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
   .add-bar .add-btn:hover { background: #374151; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  .add-bar-repeat { width: 100%; flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); }
+  .add-bar-repeat label { font-weight: 600; color: var(--text-main); margin-right: 4px; }
+  .add-bar-repeat select { max-width: 220px; }
+  .repeat-weekly-row { display: none; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .repeat-weekly-row.visible { display: flex; }
+  .dow-chip { min-width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border-soft); background: #F9FAFB; font-size: 11px; font-weight: 700; cursor: pointer; padding: 0 6px; font-family: inherit; color: var(--text-muted); transition: all 0.15s; }
+  .dow-chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .task-recur-badge { font-size: 12px; opacity: 0.75; margin-left: 2px; cursor: help; }
   
   .blocks { display: flex; flex-direction: column; gap: 20px; }
   
@@ -130,13 +139,37 @@
   .empty-day { text-align: center; padding: 48px 20px; color: #9CA3AF; font-weight: 500; font-size: 15px; background: rgba(0,0,0,0.02); border-radius: 16px; border: 2px dashed #E5E7EB; }
   
   /* Modals Overlay Base */
-  #modal-overlay, #rollover-overlay, #confirm-overlay, #categories-overlay { display: none; position: fixed; inset: 0; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  #modal-overlay, #rollover-overlay, #confirm-overlay, #categories-overlay, #banner-overlay { display: none; position: fixed; inset: 0; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
   .open { display: flex !important; animation: fadeIn 0.2s ease; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
   
   /* Standard Modal Card */
-  #modal, #confirm-modal, #categories-modal { background: #fff; border-radius: 20px; width: 360px; max-width: 100%; box-shadow: var(--shadow-lg); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border-soft); }
+  #modal, #confirm-modal, #categories-modal, #banner-modal { background: #fff; border-radius: 20px; width: 360px; max-width: 100%; box-shadow: var(--shadow-lg); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border-soft); }
+  #banner-modal { width: 400px; }
+  #banner-modal h3 { font-size: 18px; font-weight: 700; color: var(--text-main); padding: 20px 24px 8px; }
+  #banner-modal .banner-sub { font-size: 13px; color: var(--text-muted); padding: 0 24px 16px; line-height: 1.45; }
+  .banner-field { padding: 0 24px 14px; }
+  .banner-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .banner-type-row { display: flex; flex-direction: column; gap: 8px; }
+  .banner-type-row label { display: flex; align-items: center; gap: 10px; font-weight: 500; text-transform: none; letter-spacing: normal; color: var(--text-main); cursor: pointer; }
+  .banner-type-row input { accent-color: var(--accent); }
+  .banner-swatch-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .banner-swatch { width: 28px; height: 28px; border-radius: 6px; border: 2px solid var(--border-soft); cursor: pointer; padding: 0; }
+  .banner-swatch:hover { transform: scale(1.08); }
+  #banner-color-pick { width: 44px; height: 36px; border: 1px solid var(--border-soft); border-radius: 8px; cursor: pointer; padding: 2px; background: #fff; }
+  #banner-file { font-size: 13px; width: 100%; }
+  #banner-preview-wrap { margin-top: 10px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-soft); max-height: 120px; background: #F3F4F6; }
+  #banner-preview { width: 100%; height: 100px; object-fit: cover; display: block; }
+  .banner-foot { padding: 16px 24px; background: #F9FAFB; border-top: 1px solid var(--border-soft); display: flex; flex-direction: column; gap: 8px; }
+  .banner-foot-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .banner-foot button { flex: 1; min-width: 100px; padding: 10px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; transition: all 0.2s; }
+  .banner-apply { background: var(--accent); color: #fff; }
+  .banner-apply:hover { background: var(--accent-hover); }
+  .banner-secondary { background: #E5E7EB; color: var(--text-main); }
+  .banner-secondary:hover { background: #D1D5DB; }
+  .banner-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border-soft); }
+  .banner-err { font-size: 12px; color: #DC2626; padding: 0 24px 8px; min-height: 18px; }
   
   #modal { padding: 24px; }
   #modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--text-main); }
@@ -338,6 +371,7 @@
   <div class="header-row">
     <div><h1>My Week</h1><div class="subtitle">Plan your week</div></div>
     <div class="header-controls">
+      <button type="button" class="header-btn" id="banner-style-btn" title="Customize header color or photo">Banner</button>
       <button onclick="goToToday()" id="today-btn" class="header-btn today-btn">&#9733; Today</button>
       <button type="button" class="header-btn" id="categories-btn" title="Manage categories">Categories</button>
       <button type="button" class="header-btn" id="sign-out-btn" title="Sign out">Sign out</button>
@@ -385,6 +419,45 @@
     <div class="confirm-foot">
       <button class="confirm-btn confirm-btn-no" id="confirm-cancel">Cancel</button>
       <button class="confirm-btn confirm-btn-yes" id="confirm-yes">Yes</button>
+    </div>
+  </div>
+</div>
+<div id="banner-overlay">
+  <div id="banner-modal">
+    <h3>Header banner</h3>
+    <p class="banner-sub">Pick a solid color or a photo for the top bar. Your choice is saved with your schedule.</p>
+    <div class="banner-field">
+      <label>Look</label>
+      <div class="banner-type-row">
+        <label><input type="radio" name="banner-type" value="default" /> Default (app theme)</label>
+        <label><input type="radio" name="banner-type" value="color" /> Solid color</label>
+        <label><input type="radio" name="banner-type" value="image" /> Photo</label>
+      </div>
+    </div>
+    <div class="banner-field" id="banner-color-section">
+      <label>Color</label>
+      <div class="banner-swatch-row">
+        <button type="button" class="banner-swatch" style="background:#111827" data-hex="#111827" title="Charcoal"></button>
+        <button type="button" class="banner-swatch" style="background:#1e3a5f" data-hex="#1e3a5f" title="Navy"></button>
+        <button type="button" class="banner-swatch" style="background:#134e4a" data-hex="#134e4a" title="Teal"></button>
+        <button type="button" class="banner-swatch" style="background:#4c1d95" data-hex="#4c1d95" title="Purple"></button>
+        <button type="button" class="banner-swatch" style="background:#7f1d1d" data-hex="#7f1d1d" title="Wine"></button>
+        <button type="button" class="banner-swatch" style="background:#78350f" data-hex="#78350f" title="Brown"></button>
+        <input type="color" id="banner-color-pick" value="#111827" title="Custom color" />
+      </div>
+    </div>
+    <div class="banner-field" id="banner-image-section">
+      <label>Photo (JPEG/PNG, max ~8 MB — we resize for sync)</label>
+      <input type="file" id="banner-file" accept="image/jpeg,image/png,image/webp,image/gif" />
+      <div id="banner-preview-wrap" style="display:none;"><img id="banner-preview" alt="" /></div>
+    </div>
+    <div class="banner-err" id="banner-err"></div>
+    <div class="banner-foot">
+      <div class="banner-foot-row">
+        <button type="button" class="banner-apply" id="banner-apply-btn">Apply</button>
+        <button type="button" class="banner-secondary" id="banner-cancel-btn">Cancel</button>
+      </div>
+      <button type="button" class="banner-ghost" id="banner-reset-btn" style="width:100%;">Reset to default</button>
     </div>
   </div>
 </div>
@@ -486,6 +559,8 @@ function loadStateFromFirebase(){
       if (d.categories != null && Array.isArray(d.categories) && d.categories.length) S.categories = d.categories;
       if (d.categorySetupComplete === true || d.categorySetupComplete === false) S.categorySetupComplete = d.categorySetupComplete;
       else S.categorySetupComplete = true;
+      if (d.banner != null) S.banner = normalizeBanner(d.banner);
+      if (d.recurringSeries != null && Array.isArray(d.recurringSeries)) S.recurringSeries = d.recurringSeries;
       if (S.categorySetupComplete !== false) ensureCategories();
       else if (!S.categories) S.categories = [];
     } else {
@@ -495,6 +570,7 @@ function loadStateFromFirebase(){
       S.checked = {};
       S.archive = [];
       S.tasks = [];
+      S.recurringSeries = [];
       S.categories = [];
       S.categorySetupComplete = false;
       saveToFirebase();
@@ -522,10 +598,16 @@ function saveToFirebase(){
 
 function runAppInit(){
   if(!firebaseUser) loadState();
+  else {
+    S.banner = normalizeBanner(S.banner);
+    if(!Array.isArray(S.recurringSeries))S.recurringSeries=[];
+  }
   const needsRollover = initOrAdvanceWeek();
+  ensureRecurringInstancesForCurrentWeek();
   activeDay = getTodayKey();
   tabOffset = getTabOffsetForActiveDay();
   render();
+  applyHeaderBanner();
   showCategoryOnboardingIfNeeded(needsRollover);
 }
 
@@ -575,6 +657,7 @@ document.getElementById("auth-google").onclick = function(){
 document.getElementById("sign-out-btn").onclick = function(){ if (firebaseAuth) firebaseAuth.signOut(); };
 
 const STORAGE_KEY = "myweek_v1";
+const DEFAULT_BANNER = { mode: "default", color: "#111827", imageData: null };
 const DEFAULT_CATEGORIES = [
   {name:"Finance",color:"#C0392B",icon:"\u{1F4B8}"},{name:"Call",color:"#2471A3",icon:"\u{1F4DE}"},
   {name:"Email",color:"#7D3C98",icon:"\u2709\uFE0F"},{name:"Text",color:"#148F77",icon:"\u{1F4AC}"},
@@ -607,7 +690,8 @@ function buildWeekDays(mon){
 }
 function todayDow(){return DOW_LABELS[new Date().getDay()];}
 
-let S={currentWeekKey:null,weekDays:[],tasks:[],checked:{},archive:[],categories:null,categorySetupComplete:null};
+let S={currentWeekKey:null,weekDays:[],tasks:[],checked:{},archive:[],categories:null,categorySetupComplete:null,banner:null,recurringSeries:[]};
+let bannerPendingImageData=null;
 let pendingRolloverAfterOnboard=false;
 let activeDay=null,editingId=null,moveCtx=null,confirmCtx=null;
 
@@ -630,10 +714,68 @@ function getTagMeta(tag){
   return c?{color:c.color,icon:c.icon}:DEFAULT_TAG_META;
 }
 
+function normalizeBanner(b){
+  if(!b||typeof b!=="object")return{mode:"default",color:DEFAULT_BANNER.color,imageData:null};
+  var mode=b.mode==="color"||b.mode==="image"||b.mode==="default"?b.mode:"default";
+  var color=typeof b.color==="string"&&b.color?b.color:DEFAULT_BANNER.color;
+  var imageData=typeof b.imageData==="string"&&b.imageData.length?b.imageData:null;
+  if(mode==="image"&&!imageData)mode="default";
+  if(mode==="default")return{mode:"default",color:color,imageData:null};
+  if(mode==="color")return{mode:"color",color:color,imageData:null};
+  return{mode:"image",color:color,imageData:imageData};
+}
+function applyHeaderBanner(){
+  var el=document.getElementById("header");
+  if(!el)return;
+  var b=normalizeBanner(S.banner);
+  el.classList.remove("header-banner-custom");
+  el.style.background="";
+  el.style.backgroundImage="";
+  el.style.backgroundSize="";
+  el.style.backgroundPosition="";
+  el.style.backgroundRepeat="";
+  if(b.mode==="default")return;
+  el.classList.add("header-banner-custom");
+  if(b.mode==="color"){el.style.background=b.color;return;}
+  if(b.mode==="image"&&b.imageData){
+    el.style.backgroundColor="#111827";
+    el.style.backgroundImage="linear-gradient(rgba(0,0,0,0.42),rgba(0,0,0,0.38)),url("+JSON.stringify(b.imageData)+")";
+    el.style.backgroundSize="cover";
+    el.style.backgroundPosition="center";
+    el.style.backgroundRepeat="no-repeat";
+  }
+}
+function fileToBannerImageData(file,cb){
+  if(!file||!/^image\//.test(file.type)){cb(null,"Choose an image file.");return;}
+  if(file.size>8*1024*1024){cb(null,"Image is too large (max 8 MB).");return;}
+  var r=new FileReader();
+  r.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width,h=img.height,maxW=960,maxH=960;
+      if(w>maxW){h=Math.round(h*(maxW/w));w=maxW;}
+      if(h>maxH){w=Math.round(w*(maxH/h));h=maxH;}
+      var c=document.createElement("canvas");
+      c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      var q=0.82,s=c.toDataURL("image/jpeg",q);
+      while(s.length>850280&&q>0.45){q-=0.07;s=c.toDataURL("image/jpeg",q);}
+      if(s.length>950000){cb(null,"Image is still too large to sync. Try a smaller photo.");return;}
+      cb(s,null);
+    };
+    img.onerror=function(){cb(null,"Could not read that image.");};
+    img.src=r.result;
+  };
+  r.onerror=function(){cb(null,"Could not read file.");};
+  r.readAsDataURL(file);
+}
+
 function loadState(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)S={...S,...JSON.parse(r)};}catch(e){}
   if(S.categorySetupComplete==null)S.categorySetupComplete=true;
   if(S.categorySetupComplete!==false)ensureCategories();
   else if(!S.categories)S.categories=[];
+  S.banner=normalizeBanner(S.banner);
+  if(!Array.isArray(S.recurringSeries))S.recurringSeries=[];
 }
 function saveState(){
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));}catch(e){}
@@ -656,7 +798,74 @@ function initOrAdvanceWeek(){
   }
   S.currentWeekKey=wk;S.weekDays=buildWeekDays(mon);
   S.tasks=S.tasks.filter(t=>!S.checked[t.id]);
+  stripRecurringInstancesAndRegenerate();
   S.checked={};saveState();return S.tasks.length>0;
+}
+
+function instanceTaskId(seriesId,dayKey){
+  return "c_"+String(seriesId).replace(/[^a-zA-Z0-9_]/g,"_")+"_"+String(dayKey).replace(/[^a-zA-Z0-9_]/g,"_");
+}
+function expandSeriesToDayDefsForWeek(series){
+  const r=series&&series.recurrence;
+  if(!r)return[];
+  if(r.kind==="daily-all")return[...S.weekDays];
+  if(r.kind==="daily-forward"){
+    const today=new Date();today.setHours(0,0,0,0);
+    return S.weekDays.filter(d=>{const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);return dd>=today;});
+  }
+  if(r.kind==="weekly"){
+    const set=new Set(r.days||[]);
+    return S.weekDays.filter(d=>set.has(d.dow));
+  }
+  return[];
+}
+function expandSeriesToDayDefsWhenAdding(recurrence,activeDayKey){
+  if(!recurrence)return[];
+  if(recurrence.kind==="daily-all")return[...S.weekDays];
+  if(recurrence.kind==="daily-forward"){
+    const ix=S.weekDays.findIndex(d=>d.key===activeDayKey);
+    if(ix<0)return[...S.weekDays];
+    return S.weekDays.slice(ix);
+  }
+  if(recurrence.kind==="weekly"){
+    const set=new Set(recurrence.days||[]);
+    return S.weekDays.filter(d=>set.has(d.dow));
+  }
+  return[];
+}
+function stripRecurringInstancesAndRegenerate(){
+  if(!Array.isArray(S.recurringSeries))S.recurringSeries=[];
+  S.tasks=S.tasks.filter(t=>!t.seriesId);
+  S.recurringSeries.forEach(series=>{
+    expandSeriesToDayDefsForWeek(series).forEach(def=>{
+      S.tasks.push({id:instanceTaskId(series.id,def.key),dayKey:def.key,text:series.text,tag:series.tag,seriesId:series.id,recurrence:series.recurrence});
+    });
+  });
+}
+function ensureRecurringInstancesForCurrentWeek(){
+  if(!Array.isArray(S.recurringSeries)||!S.recurringSeries.length)return;
+  S.recurringSeries.forEach(series=>{
+    expandSeriesToDayDefsForWeek(series).forEach(def=>{
+      const exists=S.tasks.some(t=>t.seriesId===series.id&&t.dayKey===def.key);
+      if(!exists)S.tasks.push({id:instanceTaskId(series.id,def.key),dayKey:def.key,text:series.text,tag:series.tag,seriesId:series.id,recurrence:series.recurrence});
+    });
+  });
+}
+function syncRepeatWeeklyRowVis(){
+  const sel=document.getElementById("new-repeat"),row=document.getElementById("repeat-weekly-row");
+  if(!sel||!row)return;
+  if(sel.value==="weekly")row.classList.add("visible");else row.classList.remove("visible");
+}
+function toggleDowChip(ev){
+  const b=ev&&ev.target&&ev.target.closest&&ev.target.closest(".dow-chip");
+  if(!b)return;
+  ev.preventDefault();
+  b.classList.toggle("on");
+}
+function detachRecurringFromTask(t){
+  if(!t)return;
+  delete t.seriesId;
+  delete t.recurrence;
 }
 
 function getOverdueTasks(){
@@ -780,15 +989,16 @@ function renderCategoryOnboardingModal(){
   S.categories.forEach(cat=>{
     const row=document.createElement("div");row.className="cat-row";
     const nameInp=document.createElement("input");nameInp.type="text";nameInp.value=cat.name||"";nameInp.placeholder="Category name (e.g. Work, Home)";
-    nameInp.oninput=function(){cat.name=nameInp.value;updateCategoryOnboardingContinueBtn();};
+    nameInp.oninput=function(){cat.name=nameInp.value;updateCategoryOnboardingContinueBtn();render();};
     const colorInp=document.createElement("input");colorInp.type="color";colorInp.value=cat.color||"#888888";
-    colorInp.oninput=function(){cat.color=colorInp.value;};
+    colorInp.oninput=function(){cat.color=colorInp.value;saveState();render();};
     const delBtn=document.createElement("button");delBtn.type="button";delBtn.className="cat-del";delBtn.title="Remove";delBtn.textContent="\u2715";
     delBtn.onclick=function(){
       const ix=S.categories.indexOf(cat);
       if(ix>=0)S.categories.splice(ix,1);
       saveState();
       renderCategoryOnboardingModal();
+      render();
     };
     row.appendChild(colorInp);row.appendChild(nameInp);row.appendChild(delBtn);
     body.appendChild(row);
@@ -799,6 +1009,7 @@ function renderCategoryOnboardingModal(){
     S.categories.push({name:"",color:colors[S.categories.length%colors.length],icon:"\u2022"});
     saveState();
     renderCategoryOnboardingModal();
+    render();
   };
   body.appendChild(addBtn);
   updateCategoryOnboardingContinueBtn();
@@ -825,9 +1036,9 @@ function openCategoriesModal(){
   S.categories.forEach((cat,i)=>{
     const row=document.createElement("div");row.className="cat-row";
     const nameInp=document.createElement("input");nameInp.type="text";nameInp.value=cat.name;nameInp.placeholder="Category name";
-    nameInp.onchange=function(){const v=nameInp.value.trim();if(v&&v!==cat.name){cat.name=v;saveState();}};
+    nameInp.onchange=function(){const v=nameInp.value.trim();if(v&&v!==cat.name){cat.name=v;saveState();render();}};
     const colorInp=document.createElement("input");colorInp.type="color";colorInp.value=cat.color;
-    colorInp.onchange=function(){cat.color=colorInp.value;saveState();};
+    colorInp.onchange=function(){cat.color=colorInp.value;saveState();render();};
     const delBtn=document.createElement("button");delBtn.type="button";delBtn.className="cat-del";delBtn.title="Remove category";delBtn.textContent="\u2715";
     delBtn.onclick=function(){deleteCategory(i);};
     const canDelete=S.categories.length>1;
@@ -838,7 +1049,7 @@ function openCategoriesModal(){
   addBtn.onclick=addCategory;body.appendChild(addBtn);
   document.getElementById("categories-overlay").classList.add("open");
 }
-function closeCategoriesModal(){document.getElementById("categories-overlay").classList.remove("open");}
+function closeCategoriesModal(){document.getElementById("categories-overlay").classList.remove("open");render();}
 function addCategory(){
   if(S.categorySetupComplete!==false)ensureCategories();
   else if(!S.categories)S.categories=[];
@@ -848,7 +1059,7 @@ function addCategory(){
   if(taken){alert("A category with that name already exists.");return;}
   const colors=["#C0392B","#2471A3","#7D3C98","#148F77","#D68910","#1A6B2A","#4A4A4A","#888"];
   const nextColor=colors[S.categories.length%colors.length];
-  S.categories.push({name:name.trim(),color:nextColor,icon:"\u2022"});saveState();openCategoriesModal();
+  S.categories.push({name:name.trim(),color:nextColor,icon:"\u2022"});saveState();openCategoriesModal();render();
 }
 function deleteCategory(index){
   if(S.categorySetupComplete!==false)ensureCategories();
@@ -856,11 +1067,105 @@ function deleteCategory(index){
   if(S.categories.length<=1)return;
   const cat=S.categories[index];const fallback=S.categories[index===0?1:0].name;
   S.tasks.forEach(t=>{if(t.tag===cat.name)t.tag=fallback;});
+  if(Array.isArray(S.recurringSeries))S.recurringSeries.forEach(r=>{if(r.tag===cat.name)r.tag=fallback;});
   S.archive.forEach(a=>{if(a.tasks)a.tasks.forEach(t=>{if(t.tag===cat.name)t.tag=fallback;});});
-  S.categories.splice(index,1);saveState();openCategoriesModal();
+  S.categories.splice(index,1);saveState();openCategoriesModal();render();
 }
 document.getElementById("categories-btn").onclick=openCategoriesModal;
 document.getElementById("categories-overlay").addEventListener("click",function(e){if(e.target.id==="categories-overlay")closeCategoriesModal();});
+
+function updateBannerPreview(dataUrl){
+  var wrap=document.getElementById("banner-preview-wrap");
+  var img=document.getElementById("banner-preview");
+  if(!wrap||!img)return;
+  if(dataUrl){img.src=dataUrl;wrap.style.display="";}
+  else{wrap.style.display="none";img.removeAttribute("src");}
+}
+function syncBannerModalVisibility(){
+  var checked=document.querySelector('input[name="banner-type"]:checked');
+  var mode=checked?checked.value:"default";
+  var csec=document.getElementById("banner-color-section");
+  var isec=document.getElementById("banner-image-section");
+  if(csec)csec.style.display=mode==="color"?"":"none";
+  if(isec)isec.style.display=mode==="image"?"":"none";
+}
+function openBannerModal(){
+  bannerPendingImageData=null;
+  var errEl=document.getElementById("banner-err");if(errEl)errEl.textContent="";
+  var b=normalizeBanner(S.banner);
+  document.querySelectorAll('input[name="banner-type"]').forEach(function(r){r.checked=r.value===b.mode;});
+  var hex=/^#[0-9A-Fa-f]{6}$/.test(b.color)?b.color:"#111827";
+  var pick=document.getElementById("banner-color-pick");if(pick)pick.value=hex;
+  var fin=document.getElementById("banner-file");if(fin)fin.value="";
+  syncBannerModalVisibility();
+  updateBannerPreview(b.mode==="image"?b.imageData:null);
+  document.getElementById("banner-overlay").classList.add("open");
+}
+function closeBannerModal(){
+  document.getElementById("banner-overlay").classList.remove("open");
+}
+function applyBannerFromModal(){
+  var errEl=document.getElementById("banner-err");if(errEl)errEl.textContent="";
+  var checked=document.querySelector('input[name="banner-type"]:checked');
+  var mode=checked?checked.value:"default";
+  var pick=document.getElementById("banner-color-pick");
+  var hex=pick&&pick.value?pick.value:"#111827";
+  if(mode==="default"){
+    S.banner=normalizeBanner({mode:"default",color:hex,imageData:null});
+    bannerPendingImageData=null;saveState();applyHeaderBanner();closeBannerModal();return;
+  }
+  if(mode==="color"){
+    S.banner=normalizeBanner({mode:"color",color:hex,imageData:null});
+    bannerPendingImageData=null;saveState();applyHeaderBanner();closeBannerModal();return;
+  }
+  var img=bannerPendingImageData;
+  if(!img){var cur=normalizeBanner(S.banner);if(cur.mode==="image"&&cur.imageData)img=cur.imageData;}
+  if(!img){if(errEl)errEl.textContent="Choose a photo or pick another style.";return;}
+  S.banner=normalizeBanner({mode:"image",color:hex,imageData:img});
+  bannerPendingImageData=null;
+  saveState();
+  applyHeaderBanner();
+  closeBannerModal();
+}
+function resetBannerToDefault(){
+  S.banner=normalizeBanner({mode:"default",color:DEFAULT_BANNER.color,imageData:null});
+  bannerPendingImageData=null;
+  saveState();
+  applyHeaderBanner();
+  closeBannerModal();
+}
+document.getElementById("banner-style-btn").onclick=openBannerModal;
+document.getElementById("banner-cancel-btn").onclick=closeBannerModal;
+document.getElementById("banner-apply-btn").onclick=applyBannerFromModal;
+document.getElementById("banner-reset-btn").onclick=resetBannerToDefault;
+document.getElementById("banner-overlay").addEventListener("click",function(e){if(e.target.id==="banner-overlay")closeBannerModal();});
+document.querySelectorAll('input[name="banner-type"]').forEach(function(r){
+  r.addEventListener("change",syncBannerModalVisibility);
+});
+document.getElementById("banner-color-pick").addEventListener("input",function(){
+  document.querySelector('input[name="banner-type"][value="color"]').checked=true;
+  syncBannerModalVisibility();
+});
+document.querySelectorAll(".banner-swatch").forEach(function(btn){
+  btn.onclick=function(){
+    var h=btn.getAttribute("data-hex");if(!h)return;
+    document.getElementById("banner-color-pick").value=h;
+    document.querySelector('input[name="banner-type"][value="color"]').checked=true;
+    syncBannerModalVisibility();
+  };
+});
+document.getElementById("banner-file").addEventListener("change",function(ev){
+  var f=ev.target.files&&ev.target.files[0];
+  if(!f)return;
+  var errEl=document.getElementById("banner-err");if(errEl)errEl.textContent="";
+  fileToBannerImageData(f,function(data,err){
+    if(err){if(errEl)errEl.textContent=err;return;}
+    bannerPendingImageData=data;
+    updateBannerPreview(data);
+    document.querySelector('input[name="banner-type"][value="image"]').checked=true;
+    syncBannerModalVisibility();
+  });
+});
 
 function rolloverConfirmAsk(choice){
   if(choice==="moveAll")showConfirm("All tasks will be moved to today. Continue?",function(){closeConfirm();rolloverMoveAll();});
@@ -905,12 +1210,14 @@ function rolloverConfirm(skipConfirm){
     S.currentWeekKey=nextWeekKey;
     S.weekDays=nextWeekDays;
     S.tasks=S.tasks.filter(t=>!S.checked[t.id]);
+    stripRecurringInstancesAndRegenerate();
     S.checked={};
     const allRolloverDays=buildRolloverDays();
     const todayActual=new Date();todayActual.setHours(0,0,0,0);
     const todayInRollover=allRolloverDays.find(d=>{const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);return dd.getTime()===todayActual.getTime();});
     if(todayInRollover&&!S.weekDays.find(d=>d.key===todayInRollover.key)){
       S.weekDays=[todayInRollover,...S.weekDays];
+      ensureRecurringInstancesForCurrentWeek();
     }
     activeDay=getTodayKey();
   }
@@ -1089,7 +1396,16 @@ function renderDay(){
   if(!isP)html+=`<div class="add-bar">
     <input id="new-text" placeholder="Add a task for ${day.label}..." onkeydown="if(event.key==='Enter')addTask()" />
     <select id="new-tag">${getTagOrder().map(t=>`<option>${t}</option>`).join("")}</select>
+    <select id="new-repeat" onchange="syncRepeatWeeklyRowVis()">
+      <option value="none" selected>No repeat</option>
+      <option value="daily-all">Daily (whole week)</option>
+      <option value="daily-forward">Daily (from this day)</option>
+      <option value="weekly">Weekly (pick days)</option>
+    </select>
     <button class="add-btn" onclick="addTask()">+ Add</button>
+    <div class="add-bar-repeat">
+      <div id="repeat-weekly-row" class="repeat-weekly-row"><span style="font-weight:600;color:var(--text-main);margin-right:4px;">Days</span>${[{d:"mon",l:"M"},{d:"tue",l:"Tu"},{d:"wed",l:"W"},{d:"thu",l:"Th"},{d:"fri",l:"F"},{d:"sat",l:"Sa"},{d:"sun",l:"Su"}].map(o=>`<button type="button" class="dow-chip" data-dow="${o.d}" onclick="toggleDowChip(event)">${o.l}</button>`).join("")}</div>
+    </div>
   </div>`;
   html+=`<div class="blocks">`;
   let hasAny=false;
@@ -1117,7 +1433,7 @@ function renderDay(){
         html+=`<div class="task-row ${done?"done-row":""}" data-task-id="${task.id}" ${dragAttrs}>
           ${handle}
           <div class="cb ${done?"on":""}" style="--bc:${meta.color}" ${readOnly?"":`onclick="toggleTask('${task.id}')"`}><span class="ck">&#10003;</span></div>
-          <span class="task-text ${done?"done-text":""}">${task.text}</span>
+          <span class="task-text ${done?"done-text":""}">${task.text}</span>${task.recurrence?`<span class="task-recur-badge" title="Repeating">${task.recurrence.kind==="weekly"?"Weekly":"Daily"} \u21BB</span>`:""}
           ${readOnly?"":`<div class="row-actions">
             <button class="ib" onclick="startEdit('${task.id}')" title="Edit">&#9998;</button>
             ${nextDef?`<button class="ib" onclick="pushToNext('${task.id}','${nextDef.key}')" title="Push to next day">&#10140; ${nextDef.label.slice(0,3)}</button>`:""}
@@ -1131,15 +1447,42 @@ function renderDay(){
   if(!hasAny)html+=`<div class="empty-day">${isP?"No completed tasks for this day.":"No tasks for "+day.label+" - add one above!"}</div>`;
   html+=`</div>`;
   document.getElementById("content").innerHTML=html;
+  if(!isP)syncRepeatWeeklyRowVis();
   if(editingId){const inp=document.getElementById("ei_"+editingId);if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}}
 }
 
 function toggleTask(id){S.checked[id]=!S.checked[id];saveState();render();}
 function addTask(){
-  const inp=document.getElementById("new-text"),sel=document.getElementById("new-tag");
+  const inp=document.getElementById("new-text"),sel=document.getElementById("new-tag"),rep=document.getElementById("new-repeat");
   if(!inp?.value.trim())return;
-  S.tasks.push({id:"c"+Date.now(),dayKey:activeDay,text:inp.value.trim(),tag:sel.value});
-  inp.value="";saveState();render();
+  const text=inp.value.trim(),tag=sel.value,mode=rep?rep.value:"none";
+  if(mode==="none"){
+    S.tasks.push({id:"c"+Date.now(),dayKey:activeDay,text,tag});
+    inp.value="";
+    saveState();render();
+    return;
+  }
+  let recurrence=null;
+  if(mode==="daily-all")recurrence={kind:"daily-all"};
+  else if(mode==="daily-forward")recurrence={kind:"daily-forward"};
+  else if(mode==="weekly"){
+    const days=[...document.querySelectorAll("#repeat-weekly-row .dow-chip.on")].map(b=>b.getAttribute("data-dow")).filter(Boolean);
+    if(!days.length){alert("Choose at least one weekday for a weekly task.");return;}
+    recurrence={kind:"weekly",days:days};
+  }
+  if(!recurrence)return;
+  const sid="rs_"+Date.now()+"_"+Math.random().toString(36).slice(2,9);
+  if(!Array.isArray(S.recurringSeries))S.recurringSeries=[];
+  S.recurringSeries.push({id:sid,text,tag,recurrence});
+  const defs=expandSeriesToDayDefsWhenAdding(recurrence,activeDay);
+  if(!defs.length){alert("No days match this repeat rule for the current week.");S.recurringSeries=S.recurringSeries.filter(r=>r.id!==sid);return;}
+  defs.forEach(def=>{
+    S.tasks.push({id:instanceTaskId(sid,def.key),dayKey:def.key,text,tag,seriesId:sid,recurrence});
+  });
+  inp.value="";
+  if(rep)rep.value="none";
+  document.querySelectorAll("#repeat-weekly-row .dow-chip").forEach(b=>b.classList.remove("on"));
+  saveState();render();
 }
 function startEdit(id){editingId=id;renderDay();}
 function cancelEdit(){editingId=null;renderDay();}
@@ -1147,10 +1490,19 @@ function saveEdit(id){
   const inp=document.getElementById("ei_"+id),sel=document.getElementById("et_"+id);
   if(!inp?.value.trim())return;
   const t=S.tasks.find(t=>t.id===id);
-  if(t){t.text=inp.value.trim();t.tag=sel.value;}
+  if(t){
+    const text=inp.value.trim(),tag=sel.value;
+    if(t.seriesId){
+      const ser=S.recurringSeries&&S.recurringSeries.find(r=>r.id===t.seriesId);
+      if(ser){ser.text=text;ser.tag=tag;}
+      S.tasks.forEach(x=>{if(x.seriesId===t.seriesId){x.text=text;x.tag=tag;}});
+    }else{
+      t.text=text;t.tag=tag;
+    }
+  }
   editingId=null;saveState();render();
 }
-function pushToNext(id,toKey){const t=S.tasks.find(t=>t.id===id);if(t)t.dayKey=toKey;saveState();render();}
+function pushToNext(id,toKey){const t=S.tasks.find(t=>t.id===id);if(t){detachRecurringFromTask(t);t.dayKey=toKey;}saveState();render();}
 function openModal(id){
   const t=S.tasks.find(t=>t.id===id);if(!t)return;
   moveCtx=id;document.getElementById("modal-task-text").textContent=t.text;
@@ -1166,9 +1518,22 @@ function openModal(id){
   });
   document.getElementById("modal-overlay").classList.add("open");
 }
-function moveToDay(toKey){const t=S.tasks.find(t=>t.id===moveCtx);if(t)t.dayKey=toKey;closeModal();saveState();render();}
+function moveToDay(toKey){const t=S.tasks.find(t=>t.id===moveCtx);if(t){detachRecurringFromTask(t);t.dayKey=toKey;}closeModal();saveState();render();}
 function closeModal(){moveCtx=null;document.getElementById("modal-overlay").classList.remove("open");}
-function deleteTask(id){if(!confirm("Delete this task?"))return;S.tasks=S.tasks.filter(t=>t.id!==id);delete S.checked[id];saveState();render();}
+function deleteTask(id){
+  const t=S.tasks.find(x=>x.id===id);if(!t)return;
+  if(t.seriesId){
+    if(!confirm("Delete this entire repeating series (all days it appears)?"))return;
+    const sid=t.seriesId;
+    const removeIds=S.tasks.filter(x=>x.seriesId===sid).map(x=>x.id);
+    S.tasks=S.tasks.filter(x=>x.seriesId!==sid);
+    removeIds.forEach(k=>delete S.checked[k]);
+    if(Array.isArray(S.recurringSeries))S.recurringSeries=S.recurringSeries.filter(r=>r.id!==sid);
+    saveState();render();return;
+  }
+  if(!confirm("Delete this task?"))return;
+  S.tasks=S.tasks.filter(x=>x.id!==id);delete S.checked[id];saveState();render();
+}
 
 function getDayTasksInOrder(){
   return S.tasks.filter(t=>t.dayKey===activeDay);
