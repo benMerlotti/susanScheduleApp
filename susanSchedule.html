@@ -53,7 +53,7 @@
   
   #tabs-wrapper { display: flex; align-items: stretch; background: #E5E1D8; border-bottom: 1px solid #D1CDC4; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
   #tabs { display: flex; flex: 1; overflow: hidden; }
-  .tab-arrow { background: transparent; border: none; padding: 0 20px; cursor: pointer; font-size: 24px; color: #4B5563; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+.tab-arrow { background: transparent; border: none; padding: 0 20px; cursor: pointer; font-size: 24px; color: #4B5563; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
   .tab-arrow:hover { background: rgba(0,0,0,0.05); color: #111827; }
   .tab-arrow:disabled { color: #9CA3AF; cursor: not-allowed; background: transparent; }
   
@@ -91,9 +91,6 @@
   .add-bar .add-btn:hover { background: #374151; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
   
   .blocks { display: flex; flex-direction: column; gap: 20px; }
-  .workout-block { background: #F3F4F6; border-radius: 16px; padding: 16px 20px; display: flex; align-items: center; gap: 14px; border: 1px dashed #D1D5DB; }
-  .wo-text { font-size: 15px; color: #4B5563; font-weight: 500; }
-  .wo-time { font-size: 13px; color: #9CA3AF; font-weight: 600; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
   
   .tag-block { background: var(--card-bg); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-md); border: 1px solid var(--border-soft); transition: opacity 0.3s; }
   .tag-block.all-done { opacity: 0.6; }
@@ -217,6 +214,20 @@
   #categories-modal .cat-foot button { padding: 10px 24px; background: var(--text-main); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
   #categories-modal .cat-foot button:hover { background: #374151; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
   
+  #category-onboarding-overlay { display: none; position: fixed; inset: 0; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(4px); z-index: 270; align-items: center; justify-content: center; padding: 16px; }
+  #category-onboarding-overlay.open { display: flex !important; }
+  #category-onboarding-modal { background: #fff; border-radius: 20px; width: 420px; max-width: 100%; max-height: 90vh; overflow: hidden; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; border: 1px solid var(--border-soft); }
+  #category-onboarding-modal .co-head { background: var(--header-bg); padding: 16px 24px; border-bottom: 4px solid var(--accent); }
+  #category-onboarding-modal .co-head h3 { color: #fff; font-size: 18px; font-weight: 700; }
+  #category-onboarding-modal .co-head p { color: #9CA3AF; font-size: 13px; margin-top: 8px; line-height: 1.45; font-weight: 500; }
+  #category-onboarding-modal .co-head strong { color: #E5E7EB; }
+  #category-onboarding-modal .co-body { padding: 16px 24px; overflow-y: auto; flex: 1; }
+  #category-onboarding-modal .co-foot { padding: 16px 24px; background: #F9FAFB; border-top: 1px solid var(--border-soft); }
+  #category-onboarding-continue { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-family: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 4px 6px rgba(192,57,43,0.2); transition: all 0.2s; }
+  #category-onboarding-continue:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+  #category-onboarding-continue:disabled { opacity: 0.45; cursor: not-allowed; }
+  .co-hint { font-size: 12px; color: #9CA3AF; margin-top: 10px; font-weight: 500; }
+
   /* Auth Screen */
   #auth-screen { display: none; position: fixed; inset: 0; background: var(--bg-color); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
   #auth-screen.visible { display: flex; }
@@ -325,7 +336,7 @@
 <div id="app-content">
 <div id="header">
   <div class="header-row">
-    <div><h1>My Week</h1><div class="subtitle">9-11am workout &nbsp;|&nbsp; 11am-2pm work window</div></div>
+    <div><h1>My Week</h1><div class="subtitle">Plan your week</div></div>
     <div class="header-controls">
       <button onclick="goToToday()" id="today-btn" class="header-btn today-btn">&#9733; Today</button>
       <button type="button" class="header-btn" id="categories-btn" title="Manage categories">Categories</button>
@@ -382,6 +393,19 @@
     <div class="cat-head"><h3>Categories</h3></div>
     <div class="cat-body" id="categories-body"></div>
     <div class="cat-foot"><button type="button" onclick="closeCategoriesModal()">Done</button></div>
+  </div>
+</div>
+<div id="category-onboarding-overlay">
+  <div id="category-onboarding-modal">
+    <div class="co-head">
+      <h3>Set up your categories</h3>
+      <p>Categories group your tasks (for example: Work, Home, Errands, Calls). Add at least one to get started. You can rename, add, or remove them later from <strong>Categories</strong> in the header.</p>
+    </div>
+    <div class="co-body" id="category-onboarding-body"></div>
+    <div class="co-foot">
+      <button type="button" id="category-onboarding-continue" disabled>Continue to my week</button>
+      <p class="co-hint" id="category-onboarding-hint">Add at least one category to continue.</p>
+    </div>
   </div>
 </div>
 </div>
@@ -460,16 +484,19 @@ function loadStateFromFirebase(){
       if (d.checked != null) S.checked = d.checked;
       if (d.archive != null) S.archive = d.archive;
       if (d.categories != null && Array.isArray(d.categories) && d.categories.length) S.categories = d.categories;
-      ensureCategories();
+      if (d.categorySetupComplete === true || d.categorySetupComplete === false) S.categorySetupComplete = d.categorySetupComplete;
+      else S.categorySetupComplete = true;
+      if (S.categorySetupComplete !== false) ensureCategories();
+      else if (!S.categories) S.categories = [];
     } else {
-      // First time signing in (new account / new device): start with a clean slate
       var today = new Date(), mon = getMonday(today), wk = weekKey(mon);
       S.currentWeekKey = wk;
       S.weekDays = buildWeekDays(mon);
-      S.tasks = [];
       S.checked = {};
       S.archive = [];
-      ensureCategories();
+      S.tasks = [];
+      S.categories = [];
+      S.categorySetupComplete = false;
       saveToFirebase();
     }
   }).catch(function(err){ console.warn("Firebase load failed:", err); });
@@ -499,7 +526,7 @@ function runAppInit(){
   activeDay = getTodayKey();
   tabOffset = getTabOffsetForActiveDay();
   render();
-  showRolloverIfNeeded(needsRollover);
+  showCategoryOnboardingIfNeeded(needsRollover);
 }
 
 function startAuthListeners(){
@@ -557,15 +584,14 @@ const DEFAULT_CATEGORIES = [
 const DEFAULT_TAG_META = {color:"#888",icon:"\u2022"};
 const DOW_LABELS = ["sun","mon","tue","wed","thu","fri","sat"];
 const DAY_DISPLAY = {sun:"Sunday",mon:"Monday",tue:"Tuesday",wed:"Wednesday",thu:"Thursday",fri:"Friday",sat:"Saturday"};
-const HAS_WORKOUT = {sun:false,mon:true,tue:true,wed:true,thu:true,fri:true,sat:false};
 const DAY_NOTES = {
-  sun:"Light day - rest or prep for the week.",
-  mon:"11am-2pm work window. Start with calls.",
-  tue:"11am-2pm work window. Second wave of calls.",
-  wed:"11am-2pm work window. Calls + errands.",
-  thu:"11am-2pm work window. Errands + wrap-up.",
-  fri:"11am-2pm work window. Catch-all.",
-  sat:"No workout constraint. Good for errands and online tasks."
+  sun:"Light day — rest or prep for the week ahead.",
+  mon:"Start the week with your top priorities.",
+  tue:"Keep momentum on what matters.",
+  wed:"Midweek — good for calls and errands.",
+  thu:"Tie up loose ends before the weekend.",
+  fri:"Catch-all day for anything left open.",
+  sat:"Good for errands, batches, and home tasks."
 };
 
 function getMonday(d){const day=new Date(d),dow=day.getDay(),diff=dow===0?-6:1-dow;day.setDate(day.getDate()+diff);day.setHours(0,0,0,0);return day;}
@@ -576,25 +602,39 @@ function buildWeekDays(mon){
     const d=new Date(mon);d.setDate(d.getDate()+i);
     return{key:dow+"_"+d.toISOString().slice(0,10),dow,label:DAY_DISPLAY[dow],
       date:d.toLocaleString("default",{month:"short"})+" "+d.getDate(),
-      dateObj:new Date(d),hasWorkout:HAS_WORKOUT[dow],note:DAY_NOTES[dow]};
+      dateObj:new Date(d),note:DAY_NOTES[dow]};
   });
 }
 function todayDow(){return DOW_LABELS[new Date().getDay()];}
 
-let S={currentWeekKey:null,weekDays:[],tasks:[],checked:{},archive:[],categories:null};
+let S={currentWeekKey:null,weekDays:[],tasks:[],checked:{},archive:[],categories:null,categorySetupComplete:null};
+let pendingRolloverAfterOnboard=false;
 let activeDay=null,editingId=null,moveCtx=null,confirmCtx=null;
 
 function ensureCategories(){
+  if(S.categorySetupComplete===false){
+    if(!S.categories)S.categories=[];
+    return;
+  }
   if(!S.categories||!S.categories.length)S.categories=DEFAULT_CATEGORIES.map(c=>({name:c.name,color:c.color,icon:c.icon}));
 }
-function getTagOrder(){ensureCategories();return S.categories.map(c=>c.name);}
+function getTagOrder(){
+  ensureCategories();
+  const names=S.categories.map(c=>c.name);
+  if(S.categorySetupComplete===false)return names.filter(n=>n&&String(n).trim());
+  return names;
+}
 function getTagMeta(tag){
   ensureCategories();
   const c=S.categories.find(x=>x.name===tag);
   return c?{color:c.color,icon:c.icon}:DEFAULT_TAG_META;
 }
 
-function loadState(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)S={...S,...JSON.parse(r)};}catch(e){} ensureCategories();}
+function loadState(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)S={...S,...JSON.parse(r)};}catch(e){}
+  if(S.categorySetupComplete==null)S.categorySetupComplete=true;
+  if(S.categorySetupComplete!==false)ensureCategories();
+  else if(!S.categories)S.categories=[];
+}
 function saveState(){
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));}catch(e){}
   saveToFirebase();
@@ -603,7 +643,7 @@ function saveState(){
 function initOrAdvanceWeek(){
   const today=new Date(),mon=getMonday(today),wk=weekKey(mon);
   if(!S.currentWeekKey){
-    S.currentWeekKey=wk;S.weekDays=buildWeekDays(mon);seedInitialTasks();saveState();return false;
+    S.currentWeekKey=wk;S.weekDays=buildWeekDays(mon);S.tasks=[];saveState();return false;
   }
   if(S.currentWeekKey===wk){if(!S.weekDays||!S.weekDays.length)S.weekDays=buildWeekDays(mon);return false;}
   // New week
@@ -617,64 +657,6 @@ function initOrAdvanceWeek(){
   S.currentWeekKey=wk;S.weekDays=buildWeekDays(mon);
   S.tasks=S.tasks.filter(t=>!S.checked[t.id]);
   S.checked={};saveState();return S.tasks.length>0;
-}
-
-function seedInitialTasks(){
-  const dk=dow=>S.weekDays.find(d=>d.dow===dow)?.key;
-  const sat=dk("sat"),sun=dk("sun"),mon=dk("mon"),tue=dk("tue"),wed=dk("wed"),thu=dk("thu"),fri=dk("fri");
-  S.tasks=[
-    {id:"m1",dayKey:sat,text:"Pay Landscape Design",tag:"Finance"},
-    {id:"m2",dayKey:sat,text:"Email Steve Winter / Fox Ford",tag:"Email"},
-    {id:"m3",dayKey:sat,text:"Email Josephine Chase",tag:"Email"},
-    {id:"t8",dayKey:sat,text:"Email Doug / Closet F.",tag:"Email"},
-    {id:"t9",dayKey:sat,text:"Email pics to Gail (CFG)",tag:"Email"},
-    {id:"t10",dayKey:sat,text:"Text Todd Rookies",tag:"Text"},
-    {id:"t11",dayKey:sat,text:"Text Beth Taylor",tag:"Text"},
-    {id:"m8",dayKey:sat,text:"Book Austin reservation",tag:"Travel"},
-    {id:"m9",dayKey:sat,text:"Book NYC res. / Hotel",tag:"Travel"},
-    {id:"m10",dayKey:sat,text:"Book FL reservation",tag:"Travel"},
-    {id:"m12",dayKey:sat,text:"Book flights to GRR",tag:"Travel"},
-    {id:"t1",dayKey:sat,text:"Pay / confirm Renco bill",tag:"Finance"},
-    {id:"t2",dayKey:sat,text:"Pay / confirm LabCorp bill",tag:"Finance"},
-    {id:"t3",dayKey:sat,text:"Pull 5/3 Statements",tag:"Finance"},
-    {id:"t12",dayKey:sat,text:"Fix MS Login + HSA Login",tag:"Do"},
-    {id:"th7",dayKey:sat,text:"Email Elite Alliance - Jan. 2027 planning",tag:"Email"},
-    {id:"f5",dayKey:sat,text:"Order Staples Sleeves",tag:"Errand"},
-    {id:"f6",dayKey:sat,text:"Order Kindle Cover",tag:"Errand"},
-    {id:"m11",dayKey:sat,text:"Clean up voicemail box on phone",tag:"Do"},
-    {id:"sun1",dayKey:sun,text:"Review and prep call list for Monday",tag:"Do"},
-    {id:"sun2",dayKey:sun,text:"Set up Creatine Mornings routine",tag:"Do"},
-    {id:"sun3",dayKey:sun,text:"Blue Zone Volunteer - sign up",tag:"Do"},
-    {id:"m4",dayKey:mon,text:"Call Lindsy Cunningham",tag:"Call"},
-    {id:"m5",dayKey:mon,text:"Call Mark Sherwood",tag:"Call"},
-    {id:"m6",dayKey:mon,text:"Call Dr. Carp Kids",tag:"Call"},
-    {id:"m7",dayKey:mon,text:"Call Hernisha Rob. - 866.780.8744",tag:"Call"},
-    {id:"t4",dayKey:mon,text:"Call - Gov + TSA",tag:"Call"},
-    {id:"t5",dayKey:mon,text:"Call - PV Ticket (dispute #15)",tag:"Call"},
-    {id:"t6",dayKey:mon,text:"Call - Comentary 1800 675 5685",tag:"Call"},
-    {id:"t7",dayKey:mon,text:"Call - Just Answer",tag:"Call"},
-    {id:"t13",dayKey:mon,text:"Alex / UHealth - Follow up",tag:"Call"},
-    {id:"th9",dayKey:mon,text:"Present Sabs (and Pato)",tag:"Do"},
-    {id:"th1",dayKey:tue,text:"Call Cosy Bay Comf.",tag:"Call"},
-    {id:"th2",dayKey:tue,text:"Call Stone Solice",tag:"Call"},
-    {id:"th3",dayKey:tue,text:"Call Lake Shirt #1232",tag:"Call"},
-    {id:"th4",dayKey:tue,text:"Call Riley River - 1.877.778.9780",tag:"Call"},
-    {id:"th5",dayKey:tue,text:"Call Calixe #CAL9680 - 1669 200 1586",tag:"Call"},
-    {id:"th6",dayKey:tue,text:"Call Free Fly",tag:"Call"},
-    {id:"th10",dayKey:tue,text:"Closets - clean out (Family?)",tag:"Do"},
-    {id:"f3",dayKey:tue,text:"PHX Forge - follow up / visit",tag:"Do"},
-    {id:"th8",dayKey:tue,text:"Mail something to Abbie",tag:"Errand"},
-    {id:"f1",dayKey:wed,text:"Call Dr. Kaufman - tooth",tag:"Call"},
-    {id:"f1b",dayKey:wed,text:"Any callbacks from earlier in week",tag:"Call"},
-    {id:"w1",dayKey:wed,text:"Returns: TJ, Ross, PetSmart",tag:"Errand"},
-    {id:"w2",dayKey:wed,text:"Returns: World Mkt, Old Navy",tag:"Errand"},
-    {id:"w4",dayKey:wed,text:"Trader Joe's - grocery run",tag:"Errand"},
-    {id:"w3",dayKey:thu,text:"Returns: Carlos Shoes, Franco Sarto",tag:"Errand"},
-    {id:"w5",dayKey:thu,text:"Chico's - pick up blazer",tag:"Errand"},
-    {id:"w6",dayKey:thu,text:"Cactus Pool - swim",tag:"Errand"},
-    {id:"f8",dayKey:fri,text:"Review week - handle anything missed",tag:"Do"},
-    {id:"f9",dayKey:fri,text:"Clean up Gmail inbox",tag:"Do"}
-  ];
 }
 
 function getOverdueTasks(){
@@ -770,8 +752,74 @@ document.getElementById("confirm-yes").onclick=function(){if(confirmCtx){confirm
 document.getElementById("confirm-cancel").onclick=closeConfirm;
 document.getElementById("confirm-overlay").addEventListener("click",function(e){if(e.target.id==="confirm-overlay")closeConfirm();});
 
+function showCategoryOnboardingIfNeeded(needsRollover){
+  if(S.categorySetupComplete!==false){
+    showRolloverIfNeeded(needsRollover);
+    return;
+  }
+  if(!S.categories)S.categories=[];
+  if(!S.categories.length){
+    S.categories.push({name:"",color:"#C0392B",icon:"\u2022"});
+    saveState();
+  }
+  pendingRolloverAfterOnboard=needsRollover;
+  renderCategoryOnboardingModal();
+  document.getElementById("category-onboarding-overlay").classList.add("open");
+}
+function updateCategoryOnboardingContinueBtn(){
+  const btn=document.getElementById("category-onboarding-continue");
+  const hint=document.getElementById("category-onboarding-hint");
+  const n=S.categories?S.categories.filter(c=>c.name&&String(c.name).trim()).length:0;
+  const ok=n>=1;
+  if(btn)btn.disabled=!ok;
+  if(hint)hint.textContent=ok?"Tap Continue when you\u2019re ready.":"Add at least one category with a name to continue.";
+}
+function renderCategoryOnboardingModal(){
+  const body=document.getElementById("category-onboarding-body");
+  body.innerHTML="";
+  S.categories.forEach(cat=>{
+    const row=document.createElement("div");row.className="cat-row";
+    const nameInp=document.createElement("input");nameInp.type="text";nameInp.value=cat.name||"";nameInp.placeholder="Category name (e.g. Work, Home)";
+    nameInp.oninput=function(){cat.name=nameInp.value;updateCategoryOnboardingContinueBtn();};
+    const colorInp=document.createElement("input");colorInp.type="color";colorInp.value=cat.color||"#888888";
+    colorInp.oninput=function(){cat.color=colorInp.value;};
+    const delBtn=document.createElement("button");delBtn.type="button";delBtn.className="cat-del";delBtn.title="Remove";delBtn.textContent="\u2715";
+    delBtn.onclick=function(){
+      const ix=S.categories.indexOf(cat);
+      if(ix>=0)S.categories.splice(ix,1);
+      saveState();
+      renderCategoryOnboardingModal();
+    };
+    row.appendChild(colorInp);row.appendChild(nameInp);row.appendChild(delBtn);
+    body.appendChild(row);
+  });
+  const addBtn=document.createElement("button");addBtn.type="button";addBtn.className="cat-add";addBtn.textContent="+ Add category";
+  addBtn.onclick=function(){
+    const colors=["#C0392B","#2471A3","#7D3C98","#148F77","#D68910","#1A6B2A","#4A4A4A","#888"];
+    S.categories.push({name:"",color:colors[S.categories.length%colors.length],icon:"\u2022"});
+    saveState();
+    renderCategoryOnboardingModal();
+  };
+  body.appendChild(addBtn);
+  updateCategoryOnboardingContinueBtn();
+}
+function completeCategoryOnboarding(){
+  const valid=(S.categories||[]).filter(c=>c.name&&String(c.name).trim());
+  if(!valid.length)return;
+  S.categories=valid.map(c=>({name:String(c.name).trim(),color:c.color||"#888",icon:c.icon||"\u2022"}));
+  S.categorySetupComplete=true;
+  saveState();
+  document.getElementById("category-onboarding-overlay").classList.remove("open");
+  const r=pendingRolloverAfterOnboard;
+  pendingRolloverAfterOnboard=false;
+  render();
+  showRolloverIfNeeded(r);
+}
+document.getElementById("category-onboarding-continue").onclick=completeCategoryOnboarding;
+
 function openCategoriesModal(){
-  ensureCategories();
+  if(S.categorySetupComplete!==false)ensureCategories();
+  else if(!S.categories)S.categories=[];
   const body=document.getElementById("categories-body");
   body.innerHTML="";
   S.categories.forEach((cat,i)=>{
@@ -792,7 +840,8 @@ function openCategoriesModal(){
 }
 function closeCategoriesModal(){document.getElementById("categories-overlay").classList.remove("open");}
 function addCategory(){
-  ensureCategories();
+  if(S.categorySetupComplete!==false)ensureCategories();
+  else if(!S.categories)S.categories=[];
   const name=prompt("Category name?","New");
   if(!name||!name.trim())return;
   const taken=S.categories.some(c=>c.name.trim().toLowerCase()===name.trim().toLowerCase());
@@ -802,7 +851,8 @@ function addCategory(){
   S.categories.push({name:name.trim(),color:nextColor,icon:"\u2022"});saveState();openCategoriesModal();
 }
 function deleteCategory(index){
-  ensureCategories();
+  if(S.categorySetupComplete!==false)ensureCategories();
+  else if(!S.categories)S.categories=[];
   if(S.categories.length<=1)return;
   const cat=S.categories[index];const fallback=S.categories[index===0?1:0].name;
   S.tasks.forEach(t=>{if(t.tag===cat.name)t.tag=fallback;});
@@ -919,7 +969,7 @@ function dayEntryForDate(d){
   const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
   return {key:dow+"_"+y+"-"+m+"-"+day,dow,label:DAY_DISPLAY[dow],
     date:d.toLocaleString("default",{month:"short"})+" "+d.getDate(),
-    dateObj:new Date(d),hasWorkout:HAS_WORKOUT[dow],note:DAY_NOTES[dow]};
+    dateObj:new Date(d),note:DAY_NOTES[dow]};
 }
 function getTodayDayEntry(){
   return dayEntryForDate(new Date());
@@ -1042,8 +1092,6 @@ function renderDay(){
     <button class="add-btn" onclick="addTask()">+ Add</button>
   </div>`;
   html+=`<div class="blocks">`;
-  if(day.hasWorkout)html+=`<div class="workout-block"><span style="font-size:24px">&#127939;</span>
-    <div><div class="wo-text">Workout &amp; walk - protected time</div><div class="wo-time">9:00 - 11:00am</div></div></div>`;
   let hasAny=false;
   allTags.forEach(tag=>{
     const grp=groups[tag]||[];if(!grp.length)return;hasAny=true;
