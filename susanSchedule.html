@@ -798,6 +798,7 @@ function initOrAdvanceWeek(){
   }
   S.currentWeekKey=wk;S.weekDays=buildWeekDays(mon);
   S.tasks=S.tasks.filter(t=>!S.checked[t.id]);
+  pruneRecurringSkipsForWeek(wk);
   stripRecurringInstancesAndRegenerate();
   S.checked={};saveState();return S.tasks.length>0;
 }
@@ -805,17 +806,42 @@ function initOrAdvanceWeek(){
 function instanceTaskId(seriesId,dayKey){
   return "c_"+String(seriesId).replace(/[^a-zA-Z0-9_]/g,"_")+"_"+String(dayKey).replace(/[^a-zA-Z0-9_]/g,"_");
 }
+function isSeriesDaySkipped(series,dow){
+  const wk=S.currentWeekKey;
+  return (series.skipped||[]).some(sk=>sk.weekKey===wk&&sk.dow===dow);
+}
+function noteSeriesSkip(seriesId,fromDayKey){
+  const ser=S.recurringSeries&&S.recurringSeries.find(r=>r.id===seriesId);
+  if(!ser)return;
+  const dow=String(fromDayKey).split("_")[0];
+  if(!dow)return;
+  if(!ser.skipped)ser.skipped=[];
+  const wk=S.currentWeekKey;
+  if(!ser.skipped.some(sk=>sk.weekKey===wk&&sk.dow===dow))
+    ser.skipped.push({weekKey:wk,dow});
+}
+function pruneRecurringSkipsForWeek(weekKey){
+  if(!Array.isArray(S.recurringSeries))return;
+  S.recurringSeries.forEach(s=>{
+    if(Array.isArray(s.skipped))
+      s.skipped=s.skipped.filter(sk=>sk.weekKey===weekKey);
+  });
+}
 function expandSeriesToDayDefsForWeek(series){
   const r=series&&series.recurrence;
   if(!r)return[];
-  if(r.kind==="daily-all")return[...S.weekDays];
+  if(r.kind==="daily-all")return S.weekDays.filter(d=>!isSeriesDaySkipped(series,d.dow));
   if(r.kind==="daily-forward"){
     const today=new Date();today.setHours(0,0,0,0);
-    return S.weekDays.filter(d=>{const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);return dd>=today;});
+    return S.weekDays.filter(d=>{
+      const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);
+      if(dd<today)return false;
+      return !isSeriesDaySkipped(series,d.dow);
+    });
   }
   if(r.kind==="weekly"){
     const set=new Set(r.days||[]);
-    return S.weekDays.filter(d=>set.has(d.dow));
+    return S.weekDays.filter(d=>set.has(d.dow)&&!isSeriesDaySkipped(series,d.dow));
   }
   return[];
 }
@@ -881,6 +907,48 @@ function getOverdueTasks(){
   });
 }
 
+function dayKeyToMidnight(dayKey){
+  const ix=String(dayKey).indexOf("_");
+  if(ix<0)return null;
+  const ymd=String(dayKey).slice(ix+1);
+  const d=new Date(ymd+"T12:00:00");
+  if(isNaN(d.getTime()))return null;
+  d.setHours(0,0,0,0);
+  return d;
+}
+/** First future day (including today) after the scheduled day — for missed repeats */
+function computeRollForwardDayKey(task){
+  const rolloverDays=buildRolloverDays();
+  if(!rolloverDays.length)return task.dayKey;
+  const sched=dayKeyToMidnight(task.dayKey);
+  if(!sched)return rolloverDays[0].key;
+  const today=new Date();today.setHours(0,0,0,0);
+  const cand=new Date(sched);
+  cand.setDate(cand.getDate()+1);
+  cand.setHours(0,0,0,0);
+  while(cand.getTime()<today.getTime())cand.setDate(cand.getDate()+1);
+  const candTime=cand.getTime();
+  const exact=rolloverDays.find(d=>{const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);return dd.getTime()===candTime;});
+  if(exact)return exact.key;
+  const next=rolloverDays.find(d=>{const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);return dd.getTime()>=candTime;});
+  if(next)return next.key;
+  return rolloverDays[0].key;
+}
+function resolveRecurringRollover(task,newDayKey){
+  if(!task||!task.seriesId||!newDayKey||newDayKey===task.dayKey)return;
+  const sid=task.seriesId;
+  const other=S.tasks.find(t=>t.id!==task.id&&t.seriesId===sid&&t.dayKey===newDayKey&&!S.checked[t.id]);
+  noteSeriesSkip(sid,task.dayKey);
+  if(other){
+    const rid=task.id;
+    S.tasks=S.tasks.filter(t=>t.id!==rid);
+    delete S.checked[rid];
+    return;
+  }
+  detachRecurringFromTask(task);
+  task.dayKey=newDayKey;
+}
+
 function buildRolloverDays(){
   // Build a list of days to offer in the rollover dropdown.
   // Always includes today + all future days this week.
@@ -904,47 +972,61 @@ function buildRolloverDays(){
 
 function showRolloverIfNeeded(isNewWeek){
   const ov=getOverdueTasks();if(!ov.length)return;
+  const ovOne=ov.filter(t=>!t.seriesId);
+  const ovRecur=ov.filter(t=>t.seriesId);
   const rolloverDays=buildRolloverDays();
   const todayDef=rolloverDays[0];
   document.getElementById("ro-title").textContent=isNewWeek?"New week! Place your unfinished tasks":"Unfinished tasks from previous days";
-  document.getElementById("ro-sub").textContent=ov.length+" task"+(ov.length>1?"s":"")+" need attention - reschedule or mark done.";
+  document.getElementById("ro-sub").textContent=ov.length+" task"+(ov.length>1?"s":"")+" need attention. One-time tasks can move to today in bulk; repeating tasks default to the next day you can do them.";
   const body=document.getElementById("ro-body");body.innerHTML="";
-  const dayOpts=rolloverDays.map(d=>`<option value="${d.key}"${d.key===todayDef?.key?" selected":""}>${d.label} - ${d.date}</option>`).join("");
-  const tagsInOv=[...new Set(ov.map(t=>t.tag))];
-  const bulkTags=getTagOrder().filter(t=>tagsInOv.includes(t));
+  const dayOptsDefault=todayDef=>rolloverDays.map(d=>`<option value="${d.key}"${d.key===todayDef?.key?" selected":""}>${d.label} - ${d.date}</option>`).join("");
+  const tagsInOne=[...new Set(ovOne.map(t=>t.tag))];
+  const bulkTags=getTagOrder().filter(t=>tagsInOne.includes(t));
   if(bulkTags.length>0){
     const bulk=document.createElement("div");bulk.className="ro-bulk";
-    bulk.innerHTML=`<div class="ro-bulk-title">Bulk suggestions — set day for all tasks in a category</div>`;
+    bulk.innerHTML=`<div class="ro-bulk-title">Bulk suggestions — one-time tasks only: set day for all tasks in a category</div>`;
     bulkTags.forEach(tag=>{
       const meta=getTagMeta(tag);
       const row=document.createElement("div");row.className="ro-bulk-row";
       row.innerHTML=`<span class="ro-tag" style="background:${meta.color}">${tag}</span>
         <span class="ro-bulk-label">Move all to</span>
-        <select class="ro-bulk-sel" data-bulk-tag="${tag}">${dayOpts}</select>`;
+        <select class="ro-bulk-sel" data-bulk-tag="${tag}">${dayOptsDefault(todayDef)}</select>`;
       row.querySelector("select").onchange=function(){
         const dayKey=this.value;
-        ov.filter(t=>t.tag===tag).forEach(t=>{const s=document.getElementById("ro_"+t.id);if(s)s.value=dayKey;});
+        ovOne.filter(t=>t.tag===tag).forEach(t=>{const s=document.getElementById("ro_"+t.id);if(s)s.value=dayKey;});
       };
       bulk.appendChild(row);
     });
     body.appendChild(bulk);
   }
-  ov.forEach(task=>{
-    const meta=getTagMeta(task.tag);
-    const fromDef=S.weekDays.find(d=>d.key===task.dayKey);
-    const fromLabel=fromDef?fromDef.label:"previous week";
-    const opts=rolloverDays.map(d=>`<option value="${d.key}"${d.key===todayDef?.key?" selected":""}>${d.label} - ${d.date}</option>`).join("");
-    const row=document.createElement("div");row.className="ro-row";
-    row.innerHTML=`<span class="ro-tag" style="background:${meta.color}">${task.tag}</span>
-      <span class="ro-text" title="${task.text}">${task.text}</span>
-      <span class="ro-from">from ${fromLabel}</span>
-      <label class="ro-done"><input type="checkbox" id="ro_done_${task.id}"> Done</label>
-      <select class="ro-sel" id="ro_${task.id}">${opts}</select>`;
-    const doneCb=row.querySelector("#ro_done_"+task.id);
-    const daySel=row.querySelector("#ro_"+task.id);
-    doneCb.onchange=function(){daySel.disabled=doneCb.checked;};
-    body.appendChild(row);
-  });
+  function appendRolloverRows(list,isRecurring){
+    list.forEach(task=>{
+      const meta=getTagMeta(task.tag);
+      const fromDef=S.weekDays.find(d=>d.key===task.dayKey);
+      const fromLabel=fromDef?fromDef.label:"previous week";
+      const defaultKey=isRecurring?computeRollForwardDayKey(task):todayDef?.key;
+      const opts=rolloverDays.map(d=>`<option value="${d.key}"${d.key===defaultKey?" selected":""}>${d.label} - ${d.date}</option>`).join("");
+      const recurHint=isRecurring?` <span class="ro-from" style="font-style:italic">(repeating)</span>`:"";
+      const row=document.createElement("div");row.className="ro-row";
+      row.innerHTML=`<span class="ro-tag" style="background:${meta.color}">${task.tag}</span>
+        <span class="ro-text" title="${task.text}">${task.text}</span>${recurHint}
+        <span class="ro-from">from ${fromLabel}</span>
+        <label class="ro-done"><input type="checkbox" id="ro_done_${task.id}"> Done</label>
+        <select class="ro-sel" id="ro_${task.id}">${opts}</select>`;
+      const doneCb=row.querySelector("#ro_done_"+task.id);
+      const daySel=row.querySelector("#ro_"+task.id);
+      doneCb.onchange=function(){daySel.disabled=doneCb.checked;};
+      body.appendChild(row);
+    });
+  }
+  if(ovOne.length){
+    const h=document.createElement("div");h.className="ro-bulk-title";h.style.marginTop=bulkTags.length?"12px":"0";h.textContent="One-time tasks";body.appendChild(h);
+    appendRolloverRows(ovOne,false);
+  }
+  if(ovRecur.length){
+    const h=document.createElement("div");h.className="ro-bulk-title";h.style.marginTop=ovOne.length?"14px":"0";h.textContent="Repeating tasks — default is next open day (change day or mark done)";body.appendChild(h);
+    appendRolloverRows(ovRecur,true);
+  }
   document.getElementById("rollover-overlay").classList.add("open");
 }
 
@@ -1168,15 +1250,15 @@ document.getElementById("banner-file").addEventListener("change",function(ev){
 });
 
 function rolloverConfirmAsk(choice){
-  if(choice==="moveAll")showConfirm("All tasks will be moved to today. Continue?",function(){closeConfirm();rolloverMoveAll();});
-  else if(choice==="apply")showConfirm("Tasks will be moved to the days you selected. Continue?",function(){closeConfirm();rolloverConfirm(true);});
+  if(choice==="moveAll")showConfirm("All one-time overdue tasks will move to today. Repeating tasks are unchanged here — use their rows or mark done. Continue?",function(){closeConfirm();rolloverMoveAll();});
+  else if(choice==="apply")showConfirm("One-time tasks move to the days you pick. Repeating tasks roll forward (or merge if that day already has the same repeat). Continue?",function(){closeConfirm();rolloverConfirm(true);});
 }
 function rolloverMoveAll(){
   const rolloverDays=buildRolloverDays();
   const today=new Date();today.setHours(0,0,0,0);
   const todayDef=rolloverDays.find(d=>{const dd=new Date(d.dateObj);dd.setHours(0,0,0,0);return dd.getTime()===today.getTime();})||rolloverDays[0];
   if(!todayDef)return;
-  getOverdueTasks().forEach(task=>{
+  getOverdueTasks().filter(t=>!t.seriesId).forEach(task=>{
     const doneCb=document.getElementById("ro_done_"+task.id);
     const s=document.getElementById("ro_"+task.id);
     if(doneCb?.checked)return;
@@ -1191,7 +1273,16 @@ function rolloverConfirm(skipConfirm){
     const doneCb=document.getElementById("ro_done_"+task.id);
     if(doneCb?.checked){S.checked[task.id]=true;return;}
     const s=document.getElementById("ro_"+task.id);
-    if(s){const t=S.tasks.find(t=>t.id===task.id);if(t){t.dayKey=s.value;selectedKeys.add(s.value);}}
+    if(!s)return;
+    const t=S.tasks.find(x=>x.id===task.id);
+    if(!t)return;
+    if(t.seriesId){
+      resolveRecurringRollover(t,s.value);
+      selectedKeys.add(s.value);
+      return;
+    }
+    t.dayKey=s.value;
+    selectedKeys.add(s.value);
   });
   // If any tasks were moved to next week's days, advance the week
   const nextMon=getMonday(new Date(new Date().getTime()+7*24*60*60*1000));
@@ -1208,6 +1299,7 @@ function rolloverConfirm(skipConfirm){
         tasks:done.map(t=>({text:t.text,tag:t.tag}))});
     }
     S.currentWeekKey=nextWeekKey;
+    pruneRecurringSkipsForWeek(nextWeekKey);
     S.weekDays=nextWeekDays;
     S.tasks=S.tasks.filter(t=>!S.checked[t.id]);
     stripRecurringInstancesAndRegenerate();
