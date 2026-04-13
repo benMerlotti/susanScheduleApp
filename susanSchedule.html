@@ -899,10 +899,17 @@ function getOverdueTasks(){
   return S.tasks.filter(t=>{
     if(S.checked[t.id])return false;
     const def=S.weekDays.find(d=>d.key===t.dayKey);
-    // Only treat as overdue if the task's day is in the current week and that day is in the past.
-    // Tasks whose dayKey isn't in weekDays (e.g. moved to next week) are not overdue.
-    if(!def)return false;
-    const dd=new Date(def.dateObj);dd.setHours(0,0,0,0);
+    // Repeating instances stay tied to the current visible week logic.
+    if(t.seriesId){
+      if(!def)return false;
+      const dd=new Date(def.dateObj);dd.setHours(0,0,0,0);
+      return dd<today;
+    }
+    // One-time tasks should always surface if their calendar day is in the past,
+    // even when that day is from a prior week.
+    const dd=def?new Date(def.dateObj):dayKeyToMidnight(t.dayKey);
+    if(!dd)return false;
+    dd.setHours(0,0,0,0);
     return dd<today;
   });
 }
